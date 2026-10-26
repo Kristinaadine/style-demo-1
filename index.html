@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRA · Running Style</title>
+  <meta name="description" content="Sistem penyimpanan dan pengeditan database running style BRA: dokumen teknis, alokasi departemen, dan publikasi FRONT/BACK.">
+  <link rel="stylesheet" href="assets/vendor/fonts.css">
+  <link rel="stylesheet" href="assets/vendor/tabler-icons.css">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="rail" id="rail" aria-label="Navigasi utama"></aside>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main class="view" id="view"></main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop" id="modal" hidden></div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/ui-core.js"></script>
+  <script src="assets/view-database.js"></script>
+  <script src="assets/view-cells.js"></script>
+  <script src="assets/view-style.js"></script>
+  <script src="assets/view-ops.js"></script>
+  <script src="assets/router.js"></script>
+  <script src="assets/actions.js"></script>
+  <script src="assets/actions-db.js"></script>
+  <script src="assets/actions-style.js"></script>
+  <script src="assets/actions-ops.js"></script>
+  <script>window.BOOT();</script>
+</body>
+</html>
