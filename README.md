@@ -1,112 +1,50 @@
-# BRA Running Style — sistem penyimpanan & pengeditan database
+# BRA Running Style
 
-Aplikasi web untuk menyimpan, mengedit, dan mengalokasikan data **running style** lintas departemen: dokumen teknis (Blue Files), sample request, alokasi dokumen per departemen, dan publikasi FRONT/BACK.
+Demo pengelolaan update Planner, index Data Master, serta file per Buyer dan Style. Aplikasi menggunakan HTML, CSS, dan JavaScript biasa tanpa proses build.
 
-Aplikasi berjalan sepenuhnya di browser (HTML + CSS + JavaScript, tanpa build step dan tanpa CDN). Data disimpan di `localStorage` sehingga setiap perubahan benar-benar mengubah data, bukan sekadar tampilan.
+## Menjalankan di localhost
 
-## Menjalankan
-
-**Paling cepat (XAMPP)**
-1. Letakkan folder ini di dalam `C:\xampp\htdocs\` (mis. `C:\xampp\htdocs\running-style`).
-2. Nyalakan Apache di XAMPP.
-3. Buka `http://localhost/running-style/`.
-
-**Tanpa Apache** (folder ini sudah di dalam instalasi XAMPP, jadi PHP tersedia):
+Dengan PHP dari XAMPP:
 
 ```powershell
 C:\xampp\php\php.exe -S localhost:8123 -t .
 ```
 
-lalu buka `http://localhost:8123/`.
+Buka `http://localhost:8123/`.
 
-**Buka langsung**: `index.html` juga bisa dibuka dengan klik dua kali. Semua skrip dimuat sebagai skrip biasa (bukan ES module) sehingga tidak terblokir `file://`.
+## Menu utama
 
-## Deploy
-
-Karena hanya berkas statis, seluruh folder bisa diunggah apa adanya:
-
-| Target | Cara |
+| Menu | Fungsi |
 | --- | --- |
-| Netlify | Drag & drop folder ini ke app.netlify.com/drop |
-| Vercel | `vercel deploy --prod` pada folder ini (tanpa framework) |
-| GitHub Pages | Push ke repo, aktifkan Pages pada branch utama |
-| Shared hosting / cPanel | Unggah isi folder ke `public_html` |
+| **Planner** | Unggah dan simpan file New Style Updated dengan label minggu, misalnya `WK 11-14`; lihat dan unduh file yang tersimpan. |
+| **Data Master** | Gunakan ikon filter pada header tiap kolom untuk mencari nilai pada kolom tersebut. Perbarui Brand, OPD, Delivery Date, PIC, NB/B, SMV, serta Remark. Status Template FRONT-BACK dan Foto Fitting mengikuti file pada folder style. |
+| **Daftar Style** | Pilih Buyer dan article/style, telusuri folder fungsi, unggah file, lihat riwayat versi, unduh file, dan tautkan satu file ke beberapa folder. Folder tambahan dapat dibuat per Buyer. |
 
-Yang perlu diunggah: `index.html`, `assets/` (termasuk `assets/vendor/` untuk font dan ikon). Folder `legacy/` hanya arsip prototipe lama dan boleh tidak diunggah.
+Product Group tersedia sebagai pilihan/filter: B-Bra, C-Baby Doll, C-Camisole, C-Tankini Top, C-Top, D-Bodysuit, D-Romper, L-Bustier, P-Bikini, P-Brief, P-Hipster, P-Panty, P-Shorty, T-Thong, dan X-Boxer.
 
-## Halaman
+## Penyimpanan dan batas demo
 
-| Rute | Isi |
-| --- | --- |
-| `#/tindak-lanjut` | Antrean kerja: dokumen belum ada, verifikasi tertunda, publikasi draft, PIC kosong, alokasi kosong. Panel kanan menyelesaikan item yang dipilih. |
-| `#/database` | Daftar style + editor langsung di panel kanan (perubahan tertahan sampai disimpan). |
-| `#/edit-sel` | Pengeditan banyak style sekaligus dengan panel “perubahan tertunda” dan validasi. |
-| `#/blue-files/:id` | Matriks dokumen × departemen (MD, Pattern Maker, IE-Technical, Production, QA) + publikasi FRONT/BACK. |
-| `#/style/:id` | Workspace style: identitas, register dokumen + pemeriksa versi, sample request, riwayat publikasi. |
-| `#/pemantauan` | Kelengkapan dokumen, cakupan alokasi, komposisi antrean. |
-| `#/impor` | Impor CSV: sumber → pemetaan kolom → rekonsiliasi konflik → konfirmasi. |
-| `#/log` | Log aktivitas per jenis tindakan. |
+- Nilai Planner/Data Master serta metadata folder dan versi disimpan pada `localStorage`; isi file disimpan pada IndexedDB di browser.
+- File dapat ditautkan ke beberapa folder dalam satu style tanpa membuat salinan file.
+- Penyimpanan ini hanya tersedia pada browser dan perangkat yang sama. Demo ini **belum** tersambung ke server kantor, belum membagikan data antar pengguna, dan belum menerapkan autentikasi atau izin akses server.
+- Perubahan data lama dipertahankan saat inisialisasi; field Data Master yang belum ada sebelumnya ditambahkan tanpa menghapus nilai lama. Buyer lama seperti VS, SPANX, dan WACOAL dipetakan ke nama buyer yang digunakan di menu baru.
+- Struktur folder awal tersedia per Buyer dan dapat ditambah. Template folder saat ini merupakan daftar awal umum, bukan konfigurasi final dari server kantor.
+- Status template/foto hijau saat file tersedia; kuning bila belum ada. Tanggal menampilkan upload terakhir pada folder terkait.
 
-## Aturan domain yang dijaga aplikasi
+Integrasi produksi tetap memerlukan kontrak API, skema database, lokasi storage, autentikasi, dan aturan akses dari tim IT.
 
-- Nomor style disimpan sebagai **teks** (nol di depan dipertahankan). Kunci pencocokan impor: style number + buyer.
-- Status development dan status produksi **terpisah**.
-- Enam kategori dokumen: BOM, Material Estimation, HO, MC (measurement ratio), RA, Foto style.
-- Revisi baru masuk sebagai versi berikutnya dengan status *menunggu verifikasi* dan **tidak** menimpa versi yang sudah terverifikasi.
-- **Alokasi ≠ persetujuan.** Alokasi menentukan departemen yang boleh memakai suatu versi; status verifikasi tetap terpisah.
-- Owner MD-MKT adalah field per style, **bukan** kolom keenam pada matriks alokasi.
-- Publikasi FRONT dan BACK diterbitkan terpisah. Draft tidak mengganti versi yang berlaku.
-- Impor identitas tidak membuat Sample Request dan tidak memverifikasi dokumen.
+## Struktur berkas aktif
 
-## Peran & izin (simulasi)
-
-Gunakan pemilih **Peran** di kanan atas untuk mencoba batas wewenang:
-
-| Peran | Edit data | Edit massal | Impor | Unggah | Verifikasi | Alokasi | Terbitkan |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Administrator | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| MD — pemelihara data | ✓ | ✓ | ✓ | — | — | ✓ | ✓ |
-| IE-Technical | ✓ | — | — | ✓ | ✓ | ✓ | ✓ |
-| Pattern Maker | ✓ | — | — | ✓ | — | ✓ | — |
-| Production / QA | — | — | — | — | — | — | — |
-
-## Format berkas impor
-
-- Format: `.csv`, `.tsv`, atau `.txt`. Pemisah (`;`, `,`, atau tab) dideteksi otomatis; desimal boleh memakai koma (`1,8`).
-- Berkas `.xlsx` belum dibaca langsung — ekspor lembar kerja ke CSV lebih dulu.
-- Kolom dikenali otomatis dari nama header (`STYLE NO`, `BUYER`, `DEV STATUS`, `MC RATIO`, `PIC PATTERN`, dan seterusnya) dan masih bisa diubah manual.
-- Baris tanpa style number, status di luar daftar sah, atau MC di luar 0,5–4,0 akan dikecualikan dan dilaporkan.
-- Tombol **Muat contoh CSV** menyediakan berkas contoh lengkap dengan konflik, baris tidak valid, dan duplikat.
-
-## Batasan saat ini
-
-- Penyimpanan hanya di browser (`localStorage`); data tidak dibagi antar pengguna atau perangkat. “Kembalikan data contoh” pada sidebar memuat ulang data awal.
-- Unggahan berkas hanya mencatat metadata (nama, ukuran, pengunggah, versi) — isi berkas tidak disimpan dan tidak dikirim ke server.
-- Tidak ada autentikasi; peran hanyalah simulasi untuk memperlihatkan batas wewenang.
-
-## Langkah berikutnya menuju produksi
-
-1. Ganti `assets/data.js` dengan API (PHP/MySQL pada XAMPP ini, atau REST terpisah) — fungsi yang perlu dipetakan: `styles`, `docs`, `pubs`, `activity`, `allocate`, `publish`, `commitImport`.
-2. Tambah tabel: `styles`, `style_pic`, `documents`, `document_versions`, `allocations`, `publications`, `import_batches`, `activity`.
-3. Simpan berkas di disk/objek storage; simpan hash + versi di database agar alokasi menunjuk versi yang tepat.
-4. Tambah autentikasi dan pemetaan peran nyata (MD, Pattern Maker, IE-Technical, Production, QA, MD-MKT).
-
-## Struktur berkas
-
+```text
+index.html
+assets/data.js                Data contoh dan kompatibilitas data lokal
+assets/workspace-data.js      Data Master, Planner, metadata folder dan versi
+assets/workspace-app.js       Shell aplikasi, navigasi, dan aksi
+assets/view-planner.js        Halaman Planner
+assets/view-data-master.js    Index dan filter Data Master
+assets/view-style-list.js     Folder style dan pengelolaan file
+assets/app.css                Sistem visual responsif
+assets/vendor/                Font dan ikon lokal
 ```
-index.html              kerangka aplikasi
-assets/app.css          sistem visual (navy + lime, Archivo, IBM Plex Mono)
-assets/data.js          data contoh, penyimpanan, aturan, mesin impor
-assets/ui-core.js       shell, helper, antrean tindak lanjut, pemantauan
-assets/view-database.js database style + editor panel
-assets/view-cells.js    edit sel massal
-assets/view-style.js    workspace style + matriks alokasi
-assets/view-ops.js      impor, pemantauan, log aktivitas
-assets/router.js        router berbasis hash
-assets/actions.js       delegasi klik/form + modal + toast
-assets/actions-db.js    aksi database & edit sel
-assets/actions-style.js aksi workspace & alokasi
-assets/actions-ops.js   aksi impor & log
-assets/vendor/          font Archivo & IBM Plex Mono, ikon Tabler (lokal)
-legacy/                 prototipe v0.1 (arsip)
-```
+
+Komponen demo lama tidak lagi dimuat di navigasi aplikasi aktif.
