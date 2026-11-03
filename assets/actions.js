@@ -241,6 +241,18 @@
       return;
     }
 
+    if (intent.type === "reset-all") {
+      closeModal();
+      B.resetAllData().then(function () {
+        window.location.hash = "#/planner";
+        K.render();
+        toast("Semua data style, Planner, folder, dan berkas uji berhasil dihapus.");
+      }).catch(function (error) {
+        toast(error.message, "error");
+      });
+      return;
+    }
+
     closeModal();
   }
 
@@ -300,6 +312,15 @@
           body: '<div class="alert alert--block"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div>Data contoh awal dimuat ulang: 12 style, dokumen, dan riwayat demo.</div></div>',
           confirm: "Kembalikan",
           intent: { type: "reset" }
+        });
+        return;
+      case "reset-testing":
+        openModal({
+          title: "Kosongkan semua data uji?",
+          sub: "Aksi ini menghapus data dari browser dan sinkronisasi database.",
+          body: '<div class="alert alert--block"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div>Semua style, file Planner, file folder/style, folder, riwayat impor, dan berkas IndexedDB akan dihapus permanen. Data ini tidak dapat dipulihkan.</div></div>',
+          confirm: "Kosongkan Semua",
+          intent: { type: "reset-all" }
         });
         return;
       default:

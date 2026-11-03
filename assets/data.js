@@ -104,20 +104,25 @@
   }
 
   function seed() {
+    const s1 = "10345161";
+    const s2 = "10767R";
+    const s3 = "WC-88214";
+    const s4 = "AD-44082";
+    const s5 = "VS-26018";
+    const s6 = "SP-9120";
+    const s7 = "10455209";
+    const s8 = "10882P";
+    const s9 = "WC-88390";
+    const s10 = "AD-44091";
+    const s11 = "10582310";
+    const s12 = "36662R";
+
     return {
       version: 2,
-      styles: [],
-      plannerFiles: [],
-      workspaceFiles: [],
-      styleFolders: {},
-      folderCategories: {},
-      indexImports: [],
-      activity: [],
-      batches: []
-    };
-  }
-
-  /* --------------------------------------------------------------- storage */
+      role: "md",
+      styles: [
+        style({
+          id: s1, brand: "Victoria's Secret", buyer: "VS", desc: "Wireless Lightly Lined Bra",
           group: "Women's Wear", color: "Powder pink / Hitam", week: "WK 42",
           dev: "In Trial", prod: "Belum produksi", sample: "Menunggu konfirmasi", sampleEvidence: false, mc: 1.8,
           pic: { pattern: "D. Prasetyo", mdmkt: "A. Wulandari", ie: "F. Ramadhan", prod: null, qa: null },

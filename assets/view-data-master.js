@@ -47,6 +47,14 @@
 
   function viewDataMaster() {
     const styles = B.get().styles;
+    const duplicateGroups = styles.reduce(function (groups, style) {
+      const key = String(style.id || "").trim().replace(/\s+/g, " ").toLowerCase();
+      if (!key) return groups;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(style);
+      return groups;
+    }, new Map());
+    const duplicateStyles = Array.from(duplicateGroups.entries()).filter(function (entry) { return entry[1].length > 1; });
     const buyers = B.WORKSPACE_BUYERS.concat(styles.map(function (style) {
       return style.buyer;
     }).filter(function (buyer, index, list) {
@@ -155,7 +163,9 @@
         "</form></details>" +
       '<section class="panel workspace-table-panel">' +
         '<div class="panel__head workspace-filter-head"><div><h2 class="section-title">Index running style</h2>' +
-          '<p class="section-note">Menampilkan ' + filtered.length + " dari " + styles.length + " style</p></div></div>" +
+          '<p class="section-note master-sync-summary">Menampilkan ' + filtered.length + " dari " + styles.length + " style" +
+          (() => { const importRecords = B.get().indexImports || []; const latest = importRecords.find(function (record) { return record.sheetName === "PIVOT"; }); if (!latest) return ""; const pivotUnique = Number(latest.uniqueStyleCount || latest.rowCountUnique || (latest.styleIds && latest.styleIds.length) || 0); const styleRows = Number(latest.styleRowCount || 0); const masterUnique = styles.length; const missing = Array.isArray(latest.styleIds) ? latest.styleIds.filter(function (id) { return !styles.some(function (style) { return String(style.id || "").toLowerCase() === String(id || "").toLowerCase(); }); }).length : 0; return '<span class="master-sync-breakdown"><span>Cell Style Pivot: <strong>' + styleRows + '</strong> baris</span><span>Style unik Pivot: <strong>' + pivotUnique + '</strong></span><span>Data Master: <strong>' + masterUnique + '</strong> Style</span><span>Sinkron: <strong>' + (pivotUnique - missing) + '/' + pivotUnique + '</strong></span><span>Duplikat: <strong>' + duplicateStyles.length + '</strong> grup</span><span>Belum sinkron: <strong>' + missing + '</strong></span>' +
+          (duplicateStyles.length ? '<span class="master-duplicate-list">Style ganda: <strong>' + duplicateStyles.map(function (entry) { return K.esc(entry[0]) + ' (' + entry[1].length + '×)'; }).join(', ') + '</strong></span>' : '<span class="master-duplicate-list">Tidak ada Style ganda atau berulang di Data Master.</span>') + '</span>'; })() + "</p></div></div>" +
         '<div class="table-wrap workspace-table-scroll"><table class="table workspace-master-table">' +
           "<thead><tr>" +
             filterHeader("product", "Product / Article") +

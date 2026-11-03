@@ -43,6 +43,7 @@
             ' data-blob-id="' + K.esc(record.blobId) + '"' +
             ' data-file-name="' + K.esc(record.name) + '"' +
             ' data-file-type="' + K.esc(record.type) + '"' +
+            ' data-file-week="' + K.esc(record.week || '') + '"' +
             ' title="Baca isi file ini dan masukkan datanya ke Data Master">' +
             '<i class="ti ti-database-import" aria-hidden="true"></i>Import ke Data Master</button>' +
           '<button type="button" class="btn btn--danger" data-delete-planner-file' +
@@ -63,8 +64,7 @@
       '<form class="workspace-form planner-form" data-workspace-form="planner">' +
         '<div class="field"><label for="planner-week">Minggu diterima</label>' +
           '<input id="planner-week" name="week" type="text" placeholder="contoh : WK 11-14" required ' +
-            'pattern="(WK|WEEK)\\s*[0-9]{1,2}(\\s*-\\s*(WK|WEEK)?\\s*[0-9]{1,2})?" ' +
-            'title="Contoh: WK 11 atau WK 11-14"></div>' +
+            'title="Huruf besar atau kecil diperbolehkan. Contoh: wk 11, WK 11, atau wk 11-14"></div>' +
         '<div class="field"><label for="planner-file">File New Style Updated</label>' +
           '<input id="planner-file" name="file" type="file" accept=".xlsx,.xls,.csv" required>' +
           '<p class="field__note">Format: .xlsx, .xls, atau .csv. Maksimal 1 GB per berkas.</p></div>' +

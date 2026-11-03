@@ -99,10 +99,31 @@
     const productGroupOptions = '<option value=""></option>' + B.WORKSPACE_PRODUCT_GROUPS.map(function (value) {
       return '<option value="' + K.esc(value) + '">' + K.esc(value) + '</option>';
     }).join("");
+    function isImageRecord(record) {
+      const name = String(record.name || "").toLowerCase();
+      const type = String(record.type || "").toLowerCase();
+      return type.indexOf("image/") === 0 || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
+    }
+
+    function latestStylePreview(styleId) {
+      return B.styleFiles(styleId).filter(isImageRecord).sort(function (a, b) {
+        const folderPriority = function (record) {
+          const folders = record.folders || [];
+          return folders.indexOf("Foto Running Style") !== -1 ? 0 : folders.indexOf("Foto Fitting") !== -1 ? 1 : 2;
+        };
+        return folderPriority(a) - folderPriority(b) || String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || ""));
+      })[0] || null;
+    }
+
     const tableRows = styles.map(function (style) {
       const fileCount = B.styleFiles(style.id).length;
+      const preview = latestStylePreview(style.id);
+      const previewCell = preview
+        ? '<div class="style-preview-wrap"><button type="button" class="style-preview-button" data-preview-kind="style" data-blob-id="' + K.esc(preview.blobId) + '" data-file-name="' + K.esc(preview.name) + '" data-file-type="' + K.esc(preview.type) + '" title="Preview foto running style"><img data-style-thumbnail data-thumb-blob-id="' + K.esc(preview.previewBlobId || "") + '" data-full-blob-id="' + K.esc(preview.blobId) + '" alt="Foto ' + K.esc(style.id) + '"><span class="style-preview-placeholder"><i class="ti ti-photo"></i></span></button><label class="style-preview-replace" title="Ganti foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-replace data-style-id="' + K.esc(style.id) + '"><i class="ti ti-refresh"></i></label></div>'
+        : '<label class="style-preview-button style-preview-button--upload" title="Upload foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-upload data-style-id="' + K.esc(style.id) + '"><span><i class="ti ti-photo-plus"></i><small>Upload</small></span></label>';
       return '<tr>' +
-        '<td><input class="master-cell-input master-product__input mono" data-style-id="' + K.esc(style.id) + '" data-master-field="id" value="' + K.esc(style.id) + '" aria-label="Edit Article / Style"></td>' +
+        '<td class="style-preview-cell">' + previewCell + '</td>' +
+        '<td><a class="style-number-link mono" href="#/folder-style/' + encodeURIComponent(style.id) + '" title="Buka folder Style ' + K.esc(style.id) + '"><i class="ti ti-folder-open" aria-hidden="true"></i><span>' + K.esc(style.id) + '</span></a></td>' +
         '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="desc" value="' + K.esc(style.desc || '') + '" placeholder="Nama style"></td>' +
         '<td><select class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="buyer">' + buyers.map(function (value) {
           return '<option value="' + K.esc(value) + '"' + (value === style.buyer ? ' selected' : '') + '>' + K.esc(value) + '</option>';
@@ -152,8 +173,8 @@
       '</div>' +
       (B.get().indexImports && B.get().indexImports.length ? '<section class="import-history-panel"><i class="ti ti-file-spreadsheet"></i><div><strong>Import terakhir</strong><span>' + K.esc(B.get().indexImports[0].fileName) + ' · ' + B.get().indexImports[0].rowCount + ' baris · ' + B.get().indexImports[0].added + ' ditambahkan · ' + B.get().indexImports[0].replaced + ' diganti</span></div></section>' : '') +
       '<section class="panel style-index-panel"><div class="table-wrap workspace-table-scroll"><table class="table workspace-master-table"><thead><tr>' +
-      '<th>Article / Style</th><th>Nama Style</th><th>Buyer</th><th>PIC</th><th>SMV</th><th>Remark</th><th>Folder</th><th>Aksi</th>' +
-      '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="8" class="empty">Belum ada data style. Tambahkan atau upload index running style.</td></tr>') + '</tbody></table></div></section>';
+      '<th>Preview Foto</th><th>Article / Style</th><th>Nama Style</th><th>Buyer</th><th>PIC</th><th>SMV</th><th>Remark</th><th>Folder</th><th>Aksi</th>' +
+      '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="9" class="empty">Belum ada data style. Tambahkan atau upload index running style.</td></tr>') + '</tbody></table></div></section>';
   }
 
   K.views["daftar-style"] = viewStyleList;

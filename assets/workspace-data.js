@@ -18,7 +18,7 @@
     "P-Hipster", "P-Panty", "P-Shorty", "T-Thong", "X-Boxer"
   ];
   const DEFAULT_FOLDERS = [
-    "Template Photo Running Style", "Foto Fitting", "Marketing Sample", "Pending Sample",
+    "Foto Running Style", "Template Photo Running Style", "Foto Fitting", "Marketing Sample", "Pending Sample",
     "Manual", "OMD", "Update Style", "Blue Print", "BOM-RMS", "IE",
     "Inhouse Costing", "Measurement", "Pattern"
   ];
@@ -48,10 +48,49 @@
 
   function persist() {
     try {
-      localStorage.setItem(B.STORE_KEY, JSON.stringify(B.get()));
+      if (typeof B.save === "function") {
+        B.save();
+      } else {
+        localStorage.setItem(B.STORE_KEY, JSON.stringify(B.get()));
+      }
     } catch (error) {
       throw new Error("Perubahan tidak dapat disimpan di browser: " + error.message);
     }
+  }
+
+  async function clearAllStoredFiles() {
+    const database = await openFileDatabase();
+    await new Promise(function (resolve, reject) {
+      const transaction = database.transaction(FILE_STORE, "readwrite");
+      transaction.objectStore(FILE_STORE).clear();
+      transaction.oncomplete = function () { resolve(); };
+      transaction.onerror = function () { reject(new Error("Berkas tersimpan gagal dibersihkan.")); };
+      transaction.onabort = function () { reject(new Error("Pembersihan berkas dibatalkan.")); };
+    });
+    database.close();
+  }
+
+  async function resetAllData() {
+    const state = B.get();
+    const role = state.role || "md";
+    const emptyState = {
+      version: 2,
+      role: role,
+      styles: [],
+      plannerFiles: [],
+      workspaceFiles: [],
+      styleFolders: {},
+      folderCategories: {},
+      indexImports: [],
+      activity: [],
+      batches: []
+    };
+
+    B.get().version = emptyState.version;
+    Object.keys(B.get()).forEach(function (key) { delete B.get()[key]; });
+    Object.assign(B.get(), emptyState);
+    await clearAllStoredFiles();
+    persist();
   }
 
   function openFileDatabase() {
@@ -155,10 +194,24 @@
     state.plannerFiles = Array.isArray(state.plannerFiles) ? state.plannerFiles : [];
     state.indexImports = Array.isArray(state.indexImports) ? state.indexImports : [];
     state.workspaceFiles = Array.isArray(state.workspaceFiles) ? state.workspaceFiles : [];
-    state.workspaceFiles = state.workspaceFiles.filter(function (record) { return record.styleId !== "DOBR124"; });
-    state.styles = Array.isArray(state.styles) ? state.styles.filter(function (style) { return style.id !== "DOBR124"; }) : [];
+    state.styles = Array.isArray(state.styles) ? state.styles : [];
+    const uniqueStyles = [];
+    const styleKeys = {};
+    state.styles.forEach(function (style) {
+      const key = String(style.id || "").trim().toLowerCase();
+      if (!key) return;
+      if (styleKeys[key]) {
+        const existing = styleKeys[key];
+        Object.keys(style).forEach(function (field) {
+          if ((existing[field] === "" || existing[field] == null) && style[field] !== "" && style[field] != null) existing[field] = style[field];
+        });
+      } else {
+        styleKeys[key] = style;
+        uniqueStyles.push(style);
+      }
+    });
+    state.styles = uniqueStyles;
     state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
-    delete state.styleFolders.DOBR124;
     state.workspaceFiles.forEach(function (record) {
       if (!record.standardization) record.standardization = { category: "", type: "" };
       if (record.styleId) {
@@ -194,6 +247,25 @@
       }
       if (style.opd == null) style.opd = "";
       if (style.deliveryDate == null) style.deliveryDate = "";
+      ["opd", "deliveryDate"].forEach(function (field) {
+        const text = String(style[field] || "").trim();
+        let isoAmbiguous = text.match(/^(\d{4})[-/]([0-3]?\d)[-/]([0-1]?\d)$/);
+        if (isoAmbiguous && Number(isoAmbiguous[2]) > 12 && Number(isoAmbiguous[3]) <= 12) {
+          style[field] = isoAmbiguous[1] + "-" + isoAmbiguous[3].padStart(2, "0") + "-" + isoAmbiguous[2].padStart(2, "0");
+          return;
+        }
+        let match = text.match(/^([0-1]?\d)[-/]([0-3]?\d)[-/](\d{4}|\d{2})$/);
+        if (match && Number(match[1]) <= 12 && Number(match[2]) <= 31) {
+          const year = match[3].length === 2 ? "20" + match[3] : match[3];
+          style[field] = year + "-" + match[1].padStart(2, "0") + "-" + match[2].padStart(2, "0");
+          return;
+        }
+        match = text.match(/^([0-3]?\d)[-/]([0-1]?\d)[-/](\d{4}|\d{2})$/);
+        if (match && !/^\d{4}-/.test(text)) {
+          const year = match[3].length === 2 ? "20" + match[3] : match[3];
+          style[field] = year + "-" + match[2].padStart(2, "0") + "-" + match[1].padStart(2, "0");
+        }
+      });
       if (style.smv == null) style.smv = "";
       if (style.nb == null) style.nb = "";
       if (style.productGroupMaster == null) style.productGroupMaster = "";
@@ -263,18 +335,19 @@
         throw new Error("SMV harus berupa angka nol atau lebih.");
       }
       const week = input.week ? normalizeWeek(input.week) : "";
+      const preserveMissing = input.preserveMissing === true;
       const updates = {
         brand: String(input.brand || "").trim() || input.buyer,
         buyer: input.buyer,
-        desc: String(input.description || "").trim(),
-        week: week,
-        opd: input.opd || "",
-        deliveryDate: input.deliveryDate || "",
-        productGroupMaster: input.productGroupMaster || "",
-        nb: String(input.nb || "").trim().toUpperCase(),
-        picMaster: String(input.picMaster || "").trim(),
-        smv: input.smv === "" || input.smv == null ? "" : Number(input.smv),
-        remark: String(input.remark || "").trim(),
+        desc: preserveMissing && !String(input.description || "").trim() ? existing.desc : String(input.description || "").trim(),
+        week: preserveMissing && !week ? existing.week : week,
+        opd: preserveMissing && !input.opd ? existing.opd : input.opd || "",
+        deliveryDate: preserveMissing && !input.deliveryDate ? existing.deliveryDate : input.deliveryDate || "",
+        productGroupMaster: preserveMissing && !input.productGroupMaster ? existing.productGroupMaster : input.productGroupMaster || "",
+        nb: preserveMissing && !String(input.nb || "").trim() ? existing.nb : String(input.nb || "").trim().toUpperCase(),
+        picMaster: preserveMissing && !String(input.picMaster || "").trim() ? existing.picMaster : String(input.picMaster || "").trim(),
+        smv: preserveMissing && (input.smv === "" || input.smv == null) ? existing.smv : (input.smv === "" || input.smv == null ? "" : Number(input.smv)),
+        remark: preserveMissing && !String(input.remark || "").trim() ? existing.remark : String(input.remark || "").trim(),
         updatedAt: B.today(),
         updatedBy: "Pengguna"
       };
@@ -411,6 +484,7 @@
       persist();
       for (const record of removedFiles) {
         if (record.blobId) await removeBlob(record.blobId);
+        if (record.previewBlobId) await removeBlob(record.previewBlobId);
       }
     } catch (error) {
       throw error;
@@ -424,6 +498,23 @@
     state.indexImports.unshift(record);
     state.indexImports = state.indexImports.slice(0, 20);
     persist();
+  }
+
+  function importedFileStillInMaster(fileName) {
+    const normalizedName = String(fileName || "").trim().toLowerCase();
+    const records = B.get().indexImports.filter(function (record) {
+      return String(record.fileName || "").trim().toLowerCase() === normalizedName;
+    });
+    if (!records.length) return false;
+    const tracked = records.filter(function (record) { return Array.isArray(record.styleIds) && record.styleIds.length; });
+    if (!tracked.length) return B.get().styles.length > 0;
+    return tracked.some(function (record) {
+      return record.styleIds.some(function (styleId) {
+        return B.get().styles.some(function (style) {
+          return String(style.id || "").toLowerCase() === String(styleId || "").toLowerCase();
+        });
+      });
+    });
   }
 
   async function addPlannerFile(weekValue, file) {
@@ -489,6 +580,51 @@
     }
   }
 
+  async function createImageThumbnail(file) {
+    if (!file || !String(file.type || "").toLowerCase().startsWith("image/") || /image\/svg/i.test(file.type)) return null;
+    const maxSize = 420;
+    let source = null;
+    let sourceWidth = 0;
+    let sourceHeight = 0;
+    let objectUrl = "";
+    try {
+      if (typeof createImageBitmap === "function") {
+        source = await createImageBitmap(file);
+        sourceWidth = source.width;
+        sourceHeight = source.height;
+      }
+    } catch (error) {
+      source = null;
+    }
+    if (!source) {
+      objectUrl = URL.createObjectURL(file);
+      await new Promise(function (resolve, reject) {
+        const image = new Image();
+        image.onload = function () { source = image; sourceWidth = image.naturalWidth; sourceHeight = image.naturalHeight; resolve(); };
+        image.onerror = function () { reject(new Error("Gambar tidak dapat dibaca.")); };
+        image.src = objectUrl;
+      });
+    }
+    const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+    const context = canvas.getContext("2d");
+    if (!context) {
+      if (source.close) source.close();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      return null;
+    }
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
+    if (source.close) source.close();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    return await new Promise(function (resolve) {
+      canvas.toBlob(function (blob) { resolve(blob); }, "image/jpeg", 0.82);
+    });
+  }
+
   async function addStyleFile(styleId, categoryValues, file, standardization) {
     const style = B.styleById(styleId);
     if (!style) throw new Error("Style tidak ditemukan.");
@@ -515,6 +651,16 @@
       return record.styleId === styleId && String(record.name).toLowerCase() === file.name.toLowerCase();
     });
     const id = "style-file-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    let previewBlobId = "";
+    try {
+      const thumbnail = await createImageThumbnail(file);
+      if (thumbnail) {
+        previewBlobId = id + "-preview";
+        await storeBlob(previewBlobId, thumbnail);
+      }
+    } catch (error) {
+      previewBlobId = "";
+    }
     const record = {
       id: id,
       blobId: id,
@@ -524,6 +670,7 @@
       name: file.name,
       type: file.type || "application/octet-stream",
       size: file.size,
+      previewBlobId: previewBlobId,
       version: 1,
       uploadedAt: new Date().toISOString(),
       uploadedBy: style.picMaster || "Pengguna",
@@ -540,6 +687,7 @@
       persist();
       for (const duplicate of priorVersions) {
         if (duplicate.blobId) await removeBlob(duplicate.blobId);
+        if (duplicate.previewBlobId) await removeBlob(duplicate.previewBlobId);
       }
     } catch (error) {
       B.get().workspaceFiles = priorVersions.concat(B.get().workspaceFiles.filter(function (item) { return item.id !== id; }));
@@ -617,6 +765,7 @@
     try {
       persist();
       await removeBlob(blobId);
+      if (record.previewBlobId) await removeBlob(record.previewBlobId);
     } catch (error) {
       state.workspaceFiles.splice(index, 0, record);
       persist();
@@ -712,6 +861,7 @@
   B.STANDARDIZATION_CATEGORIES = STANDARDIZATION_CATEGORIES;
   B.WORKSPACE_DEFAULT_FOLDERS = DEFAULT_FOLDERS;
   B.initWorkspace = ensureWorkspace;
+  B.resetAllData = resetAllData;
   B.requestPersistentStorage = requestPersistentStorage;
   B.updateMaster = updateMaster;
   B.addMasterStyle = addMasterStyle;
@@ -719,6 +869,7 @@
   B.deleteMasterStyle = deleteMasterStyle;
   B.renameMasterStyle = renameMasterStyle;
   B.recordIndexImport = recordIndexImport;
+  B.importedFileStillInMaster = importedFileStillInMaster;
   B.addPlannerFile = addPlannerFile;
   B.deletePlannerFile = deletePlannerFile;
   B.normalizeWorkspaceWeek = normalizeWeek;

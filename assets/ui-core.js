@@ -218,6 +218,7 @@
         "<strong>PT Busanaremaja Agracipta</strong>" +
         "Masuk sebagai " + esc(B.roleInfo(role()).label) +
         '<button type="button" data-action="reset-demo">Kembalikan data contoh</button>' +
+        '<button type="button" class="rail-danger-link" data-action="reset-testing">Kosongkan semua data uji</button>' +
       "</div>"
     );
   }
