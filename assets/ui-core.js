@@ -210,7 +210,7 @@
 
     return (
       '<div class="brand">' +
-        '<span class="brand__mark">BRA</span>' +
+        '<img class="brand__mark" src="assets/bra-logo.png" alt="Logo BRA">' +
         '<span><span class="brand__name">RUNNING STYLE</span><span class="brand__sub">Database &amp; alokasi</span></span>' +
       "</div>" +
       groups +
@@ -237,6 +237,7 @@
         '<span class="crumb__last truncate">' + esc(crumb[1] === "Semua style" ? selectedStyleLabel() : crumb[1]) + "</span>" +
       "</div>" +
       '<div class="top-actions">' +
+        '<span class="db-status db-status--checking" id="db-status" title="Status koneksi XAMPP/MariaDB"><i class="ti ti-database"></i> Memeriksa DB</span>' +
         '<div class="role">' +
           '<span class="hint nowrap">Peran</span>' +
           '<select class="select" data-action="role" aria-label="Peran pengguna">' + options + "</select>" +

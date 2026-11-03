@@ -17,8 +17,8 @@ Buka `http://localhost:8123/`.
 | Menu | Fungsi |
 | --- | --- |
 | **Planner** | Unggah dan simpan file New Style Updated dengan label minggu, misalnya `WK 11-14`; lihat dan unduh file yang tersimpan. |
-| **Data Master** | Gunakan ikon filter pada header tiap kolom untuk mencari nilai pada kolom tersebut. Perbarui Brand, OPD, Delivery Date, PIC, NB/B, SMV, serta Remark. Status Template FRONT-BACK dan Foto Fitting mengikuti file pada folder style. |
-| **Daftar Style** | Pilih Buyer dan article/style, telusuri folder fungsi, unggah file, lihat riwayat versi, unduh file, dan tautkan satu file ke beberapa folder. Folder tambahan dapat dibuat per Buyer. |
+| **Data Master** | Gunakan ikon filter pada header tiap kolom untuk mencari nilai pada kolom tersebut. Perbarui Brand, OPD, Delivery Date, PIC, NB/B, SMV, serta Remark. Status Template Photo Running Style dan Foto Fitting mengikuti file pada folder style. |
+| **Daftar Style** | Pilih Buyer dan article/style, telusuri folder fungsi, gunakan filter Pilih Jenis Garment (Bra atau Underwear) beserta tipe style, unggah file dengan checkpoint standarisasi, lihat riwayat versi, unduh file, dan tautkan satu file ke beberapa folder. Folder tambahan dapat dibuat per Buyer. |
 
 Product Group tersedia sebagai pilihan/filter: B-Bra, C-Baby Doll, C-Camisole, C-Tankini Top, C-Top, D-Bodysuit, D-Romper, L-Bustier, P-Bikini, P-Brief, P-Hipster, P-Panty, P-Shorty, T-Thong, dan X-Boxer.
 
@@ -31,7 +31,7 @@ Product Group tersedia sebagai pilihan/filter: B-Bra, C-Baby Doll, C-Camisole, C
 - Struktur folder awal tersedia per Buyer dan dapat ditambah. Template folder saat ini merupakan daftar awal umum, bukan konfigurasi final dari server kantor.
 - Status template/foto hijau saat file tersedia; kuning bila belum ada. Tanggal menampilkan upload terakhir pada folder terkait.
 
-Integrasi produksi tetap memerlukan kontrak API, skema database, lokasi storage, autentikasi, dan aturan akses dari tim IT.
+XAMPP/MariaDB menyediakan sinkronisasi state melalui `api/index.php`. Skema relasional ada di `database/schema.sql` dan mencakup buyer, style, folder, file, relasi folder-file, serta riwayat impor. State lengkap tetap disimpan sebagai cadangan sinkronisasi, sedangkan data utama juga dinormalisasi ke tabel relasional agar dapat dipantau di phpMyAdmin. `localStorage` tetap dipakai sebagai fallback browser jika database tidak dapat dihubungi.
 
 ## Struktur berkas aktif
 

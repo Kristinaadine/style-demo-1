@@ -7,7 +7,7 @@
   <meta name="description" content="Planner mingguan, Data Master running style, dan pengelolaan folder serta file per buyer dan style.">
   <link rel="stylesheet" href="assets/vendor/fonts.css">
   <link rel="stylesheet" href="assets/vendor/tabler-icons.css">
-  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/app.css?v=30">
 </head>
 <body>
   <div class="app">
@@ -21,12 +21,16 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="modal-backdrop" id="modal" hidden></div>
 
-  <script src="assets/data.js"></script>
-  <script src="assets/workspace-data.js"></script>
-  <script src="assets/workspace-app.js"></script>
-  <script src="assets/view-planner.js"></script>
-  <script src="assets/view-data-master.js"></script>
-  <script src="assets/view-style-list.js"></script>
+  <script src="assets/vendor/xlsx.full.min.js?v=16"></script>
+  <script src="assets/data.js?v=16"></script>
+  <script src="assets/data-import-engine.js?v=1"></script>
+  <script src="assets/workspace-data.js?v=24"></script>
+  <script src="assets/workspace-app.js?v=28"></script>
+  <script src="assets/database-adapter.js?v=1"></script>
+  <script src="assets/view-planner.js?v=16"></script>
+  <script src="assets/view-data-master.js?v=16"></script>
+  <script src="assets/view-style-list.js?v=31"></script>
+  <script src="assets/view-folder-style.js?v=16"></script>
   <script>window.BOOT();</script>
 </body>
 </html>

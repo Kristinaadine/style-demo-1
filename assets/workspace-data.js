@@ -18,10 +18,25 @@
     "P-Hipster", "P-Panty", "P-Shorty", "T-Thong", "X-Boxer"
   ];
   const DEFAULT_FOLDERS = [
-    "Template FRONT-BACK", "Foto Fitting", "Marketing Sample", "Pending Sample",
+    "Template Photo Running Style", "Foto Fitting", "Marketing Sample", "Pending Sample",
     "Manual", "OMD", "Update Style", "Blue Print", "BOM-RMS", "IE",
     "Inhouse Costing", "Measurement", "Pattern"
   ];
+  const STANDARDIZATION_CATEGORIES = {
+    "Bra": [
+      "Underwire Bra", "Bandeau Bra", "Stick-on Bra", "Sports Bra", "Full-Cup Bra",
+      "Longline Bra", "Molded-Cup Bra", "Built-in Bra", "Nursing Bra", "Racerback Bra",
+      "Plunge Bra", "Convertible Bra", "Push-Up Bra", "Balconette Bra", "Triangle Bra",
+      "Corset Bra", "Bralette", "Minimizer Bra", "T-Shirt Bra", "Strapless Bra",
+      "Wireless Bra", "Demi-Cup Bra", "Front-Closure Bra", "Adhesive Bra", "Halter Bra",
+      "Seamless Bra", "Padded Bra", "Sheer Bra", "Shelf Bra", "Maternity Bra"
+    ],
+    "Underwear": [
+      "String", "G-String", "Bikini", "Cheeky", "Mini-String / Thong", "T-String",
+      "Slip", "Tanga", "Brazilian", "Hipster", "Classic", "Boyshorts", "Maxi",
+      "Control Briefs", "High Waist / Retro", "Pantaloons"
+    ]
+  };
   const DB_NAME = "bra-running-style-files";
   const DB_VERSION = 1;
   const FILE_STORE = "blobs";
@@ -124,21 +139,69 @@
     });
   }
 
+  async function requestPersistentStorage() {
+    if (!navigator.storage) return null;
+    try {
+      if (navigator.storage.persist) await navigator.storage.persist();
+      const estimate = navigator.storage.estimate ? await navigator.storage.estimate() : null;
+      return estimate;
+    } catch (error) {
+      return null;
+    }
+  }
+
   function ensureWorkspace() {
     const state = B.get();
     state.plannerFiles = Array.isArray(state.plannerFiles) ? state.plannerFiles : [];
+    state.indexImports = Array.isArray(state.indexImports) ? state.indexImports : [];
     state.workspaceFiles = Array.isArray(state.workspaceFiles) ? state.workspaceFiles : [];
+    state.workspaceFiles = state.workspaceFiles.filter(function (record) { return record.styleId !== "DOBR124"; });
+    state.styles = Array.isArray(state.styles) ? state.styles.filter(function (style) { return style.id !== "DOBR124"; }) : [];
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    delete state.styleFolders.DOBR124;
+    state.workspaceFiles.forEach(function (record) {
+      if (!record.standardization) record.standardization = { category: "", type: "" };
+      if (record.styleId) {
+        const folders = Array.isArray(state.styleFolders[record.styleId]) ? state.styleFolders[record.styleId] : [];
+        if (folders.indexOf(record.styleId) === -1) folders.push(record.styleId);
+        state.styleFolders[record.styleId] = folders;
+        if (!Array.isArray(record.folders)) record.folders = [];
+        if (record.folders.indexOf(record.styleId) === -1) record.folders.push(record.styleId);
+      }
+    });
     state.folderCategories = state.folderCategories && typeof state.folderCategories === "object"
       ? state.folderCategories
       : {};
+    Object.keys(state.folderCategories).forEach(function (buyer) {
+      if (!Array.isArray(state.folderCategories[buyer])) return;
+      state.folderCategories[buyer] = state.folderCategories[buyer].map(function (folder) {
+        return folder === "Template FRONT-BACK" ? "Template Photo Running Style" : folder;
+      });
+    });
+    state.workspaceFiles.forEach(function (record) {
+      if (!Array.isArray(record.folders)) return;
+      record.folders = record.folders.map(function (folder) {
+        return folder === "Template FRONT-BACK" ? "Template Photo Running Style" : folder;
+      });
+    });
 
     state.styles.forEach(function (style) {
       style.buyer = LEGACY_BUYER[style.buyer] || style.buyer;
+      if (style.id === "DOBR124") {
+        style.picMaster = "Yulia";
+        style.pic = style.pic && typeof style.pic === "object" ? style.pic : {};
+        style.pic.pattern = "Yulia";
+      }
       if (style.opd == null) style.opd = "";
       if (style.deliveryDate == null) style.deliveryDate = "";
       if (style.smv == null) style.smv = "";
       if (style.nb == null) style.nb = "";
       if (style.productGroupMaster == null) style.productGroupMaster = "";
+      if (!style.productGroupMaster && PRODUCT_GROUPS.indexOf(style.productGroup) !== -1) {
+        style.productGroupMaster = style.productGroup;
+      }
+      if (PRODUCT_GROUPS.indexOf(style.productGroupMaster) === -1) style.productGroupMaster = "";
+      if (typeof style.nb !== "string") style.nb = "";
       if (style.picMaster == null) {
         style.picMaster = style.pic && (style.pic.pattern || style.pic.mdmkt) || "";
       }
@@ -147,6 +210,7 @@
         state.folderCategories[style.buyer] = DEFAULT_FOLDERS.slice();
       }
     });
+
 
     persist();
   }
@@ -162,6 +226,9 @@
     if (field === "week" && value) value = normalizeWeek(value);
     if (field === "productGroupMaster" && value && PRODUCT_GROUPS.indexOf(value) === -1) {
       throw new Error("Pilih kategori produk dari daftar.");
+    }
+    if (field === "nb" && value && ["NB", "B"].indexOf(value) === -1) {
+      throw new Error("Pilih NB atau B dari daftar.");
     }
     if (field === "smv" && value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
       throw new Error("SMV harus berupa angka nol atau lebih.");
@@ -180,6 +247,44 @@
     }
   }
 
+  function upsertMasterStyle(input) {
+    const id = String(input.product || "").trim();
+    if (!id) throw new Error("Nomor article/product wajib diisi.");
+    const existing = B.get().styles.find(function (style) {
+      return String(style.id || "").toLowerCase() === id.toLowerCase();
+    });
+    if (existing) {
+      if (BUYERS.indexOf(input.buyer) === -1) throw new Error("Pilih buyer dari daftar.");
+      if (input.productGroupMaster && PRODUCT_GROUPS.indexOf(input.productGroupMaster) === -1) {
+        throw new Error("Pilih kategori produk dari daftar.");
+      }
+      if (input.nb && ["NB", "B"].indexOf(input.nb) === -1) throw new Error("Pilih NB atau B dari daftar.");
+      if (input.smv && (!Number.isFinite(Number(input.smv)) || Number(input.smv) < 0)) {
+        throw new Error("SMV harus berupa angka nol atau lebih.");
+      }
+      const week = input.week ? normalizeWeek(input.week) : "";
+      const updates = {
+        brand: String(input.brand || "").trim() || input.buyer,
+        buyer: input.buyer,
+        desc: String(input.description || "").trim(),
+        week: week,
+        opd: input.opd || "",
+        deliveryDate: input.deliveryDate || "",
+        productGroupMaster: input.productGroupMaster || "",
+        nb: String(input.nb || "").trim().toUpperCase(),
+        picMaster: String(input.picMaster || "").trim(),
+        smv: input.smv === "" || input.smv == null ? "" : Number(input.smv),
+        remark: String(input.remark || "").trim(),
+        updatedAt: B.today(),
+        updatedBy: "Pengguna"
+      };
+      Object.assign(existing, updates);
+      persist();
+      return { style: existing, replaced: true };
+    }
+    return { style: addMasterStyle(input), replaced: false };
+  }
+
   function addMasterStyle(input) {
     const id = String(input.product || "").trim();
     if (!id) throw new Error("Nomor article/product wajib diisi.");
@@ -192,6 +297,9 @@
     if (BUYERS.indexOf(input.buyer) === -1) throw new Error("Pilih buyer dari daftar.");
     if (input.productGroupMaster && PRODUCT_GROUPS.indexOf(input.productGroupMaster) === -1) {
       throw new Error("Pilih kategori produk dari daftar.");
+    }
+    if (input.nb && ["NB", "B"].indexOf(input.nb) === -1) {
+      throw new Error("Pilih NB atau B dari daftar.");
     }
     if (input.smv && (!Number.isFinite(Number(input.smv)) || Number(input.smv) < 0)) {
       throw new Error("SMV harus berupa angka nol atau lebih.");
@@ -208,7 +316,7 @@
       opd: input.opd || "",
       deliveryDate: input.deliveryDate || "",
       productGroupMaster: input.productGroupMaster || "",
-      nb: input.nb || "",
+      nb: String(input.nb || "").trim(),
       picMaster: String(input.picMaster || "").trim(),
       smv: input.smv ? Number(input.smv) : "",
       remark: String(input.remark || "").trim(),
@@ -249,9 +357,82 @@
     return "WK " + start + (end == null ? "" : "-" + end);
   }
 
+  function renameMasterStyle(oldId, newId) {
+    const state = B.get();
+    const id = String(newId || "").trim();
+    if (!id) throw new Error("Article/Style tidak boleh kosong.");
+    if (id.length > 80) throw new Error("Article/Style maksimal 80 karakter.");
+    if (id.toLowerCase() === String(oldId).toLowerCase()) return oldId;
+    if (state.styles.some(function (style) { return String(style.id).toLowerCase() === id.toLowerCase(); })) {
+      throw new Error("Article/Style tersebut sudah digunakan.");
+    }
+    const style = state.styles.find(function (item) { return item.id === oldId; });
+    if (!style) throw new Error("Style tidak ditemukan.");
+
+    const previousStyle = state.styles.slice();
+    const previousFolders = state.styleFolders && state.styleFolders[oldId];
+    const previousFiles = state.workspaceFiles.map(function (record) { return Object.assign({}, record); });
+    style.id = id;
+    state.workspaceFiles.forEach(function (record) {
+      if (record.styleId === oldId) {
+        record.styleId = id;
+        if (Array.isArray(record.folders)) {
+          record.folders = record.folders.map(function (folder) { return folder === oldId ? id : folder; });
+        }
+      }
+    });
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    if (Object.prototype.hasOwnProperty.call(state.styleFolders, oldId)) {
+      const folders = state.styleFolders[oldId].slice();
+      state.styleFolders[id] = folders.map(function (folder) { return folder === oldId ? id : folder; });
+      delete state.styleFolders[oldId];
+    }
+    try {
+      persist();
+    } catch (error) {
+      state.styles = previousStyle;
+      state.workspaceFiles = previousFiles;
+      if (previousFolders) state.styleFolders[id] = previousFolders;
+      delete state.styleFolders[id];
+      throw error;
+    }
+    return id;
+  }
+
+  async function deleteMasterStyle(id) {
+    const state = B.get();
+    const style = state.styles.find(function (item) { return item.id === id; });
+    if (!style) throw new Error("Style tidak ditemukan.");
+    const removedFiles = state.workspaceFiles.filter(function (record) { return record.styleId === id; });
+    state.styles = state.styles.filter(function (item) { return item.id !== id; });
+    state.workspaceFiles = state.workspaceFiles.filter(function (record) { return record.styleId !== id; });
+    delete state.styleFolders[id];
+    try {
+      persist();
+      for (const record of removedFiles) {
+        if (record.blobId) await removeBlob(record.blobId);
+      }
+    } catch (error) {
+      throw error;
+    }
+    return true;
+  }
+
+  function recordIndexImport(record) {
+    const state = B.get();
+    state.indexImports = Array.isArray(state.indexImports) ? state.indexImports : [];
+    state.indexImports.unshift(record);
+    state.indexImports = state.indexImports.slice(0, 20);
+    persist();
+  }
+
   async function addPlannerFile(weekValue, file) {
     if (!file) throw new Error("Pilih file Planner yang akan disimpan.");
+    if (file.size > 1024 * 1024 * 1024) throw new Error("Ukuran file maksimal 1 GB per berkas pada versi browser ini.");
     const week = normalizeWeek(weekValue);
+    const duplicates = B.get().plannerFiles.filter(function (record) {
+      return record.week === week && record.name.toLowerCase() === file.name.toLowerCase();
+    });
     const id = "planner-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
     const record = {
       id: id,
@@ -266,10 +447,16 @@
 
     await storeBlob(id, file);
     B.get().plannerFiles.unshift(record);
+    B.get().plannerFiles = B.get().plannerFiles.filter(function (item) {
+      return item.id === id || !(item.week === week && String(item.name).toLowerCase() === file.name.toLowerCase());
+    });
     try {
       persist();
+      for (const duplicate of duplicates) {
+        if (duplicate.blobId) await removeBlob(duplicate.blobId);
+      }
     } catch (error) {
-      B.get().plannerFiles.shift();
+      B.get().plannerFiles = duplicates.concat(B.get().plannerFiles.filter(function (item) { return item.id !== id; }));
       await removeBlob(id);
       throw error;
     }
@@ -302,23 +489,31 @@
     }
   }
 
-  async function addStyleFile(styleId, categoryValues, file) {
+  async function addStyleFile(styleId, categoryValues, file, standardization) {
     const style = B.styleById(styleId);
     if (!style) throw new Error("Style tidak ditemukan.");
     if (!file) throw new Error("Pilih file yang akan diunggah.");
-    const categories = Array.from(new Set(Array.isArray(categoryValues) ? categoryValues : [categoryValues]));
-    if (!categories.length || categories.some(function (category) {
-      return !foldersForBuyer(style.buyer).includes(category);
-    })) {
-      throw new Error("Pilih folder yang tersedia untuk buyer ini.");
+    if (file.size > 1024 * 1024 * 1024) throw new Error("Ukuran file maksimal 1 GB per berkas pada versi browser ini.");
+    const categories = Array.from(new Set((Array.isArray(categoryValues) ? categoryValues : [categoryValues])
+      .filter(function (category) { return Boolean(category); })));
+    if (!categories.length) {
+      categories.push("File Style");
+    }
+    categories.forEach(function (category, index) {
+      if (category === "File Style" || foldersForBuyer(style.buyer).includes(category) || foldersForStyle(style.id).includes(category)) return;
+      categories[index] = "File Style";
+    });
+    const standard = standardization || { category: "", type: "" };
+    if (standard.category && !STANDARDIZATION_CATEGORIES[standard.category]) {
+      throw new Error("Jenis garment yang dipilih tidak valid.");
+    }
+    if (standard.category && (!standard.type || STANDARDIZATION_CATEGORIES[standard.category].indexOf(standard.type) === -1)) {
+      throw new Error("Pilih kategori yang sesuai dengan jenis garment.");
     }
 
     const priorVersions = B.get().workspaceFiles.filter(function (record) {
-      return record.styleId === styleId && record.name === file.name;
+      return record.styleId === styleId && String(record.name).toLowerCase() === file.name.toLowerCase();
     });
-    const previous = priorVersions.reduce(function (current, record) {
-      return !current || record.version > current.version ? record : current;
-    }, null);
     const id = "style-file-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
     const record = {
       id: id,
@@ -329,18 +524,25 @@
       name: file.name,
       type: file.type || "application/octet-stream",
       size: file.size,
-      version: previous ? previous.version + 1 : 1,
+      version: 1,
       uploadedAt: new Date().toISOString(),
       uploadedBy: style.picMaster || "Pengguna",
-      folders: Array.from(new Set((previous ? previous.folders : []).concat(categories)))
+      folders: categories,
+      standardization: standard.category ? { category: standard.category, type: standard.type } : { category: "", type: "" }
     };
 
     await storeBlob(id, file);
     B.get().workspaceFiles.unshift(record);
+    B.get().workspaceFiles = B.get().workspaceFiles.filter(function (item) {
+      return item.id === id || !(item.styleId === styleId && String(item.name).toLowerCase() === file.name.toLowerCase());
+    });
     try {
       persist();
+      for (const duplicate of priorVersions) {
+        if (duplicate.blobId) await removeBlob(duplicate.blobId);
+      }
     } catch (error) {
-      B.get().workspaceFiles.shift();
+      B.get().workspaceFiles = priorVersions.concat(B.get().workspaceFiles.filter(function (item) { return item.id !== id; }));
       await removeBlob(id);
       throw error;
     }
@@ -360,6 +562,69 @@
     }, null);
   }
 
+  function renamePlannerFile(blobId, newName) {
+    const record = B.get().plannerFiles.find(function (item) { return item.blobId === blobId; });
+    if (!record) throw new Error("File Planner tidak ditemukan.");
+    let name = String(newName || "").trim();
+    if (!name) throw new Error("Nama file tidak boleh kosong.");
+    if (/[\\\/]/.test(name)) throw new Error("Nama file tidak boleh mengandung tanda garis miring.");
+    const oldExtension = String(record.name || "").match(/\.[^.]+$/);
+    if (oldExtension && name.lastIndexOf(".") === -1) name += oldExtension[0];
+    if (name.length > 180) throw new Error("Nama file maksimal 180 karakter.");
+    record.name = name;
+    record.displayName = record.week + " - " + name;
+    persist();
+    return record;
+  }
+
+  function renameWorkspaceFile(blobId, newName) {
+    const record = B.get().workspaceFiles.find(function (item) { return item.blobId === blobId; });
+    if (!record) throw new Error("File style tidak ditemukan.");
+    let name = String(newName || "").trim();
+    if (!name) throw new Error("Nama file tidak boleh kosong.");
+    if (/[\\\/]/.test(name)) throw new Error("Nama file tidak boleh mengandung tanda garis miring.");
+    const oldExtension = String(record.name || "").match(/\.[^.]+$/);
+    if (oldExtension && name.lastIndexOf(".") === -1) name += oldExtension[0];
+    if (name.length > 180) throw new Error("Nama file maksimal 180 karakter.");
+    record.name = name;
+    persist();
+    return record;
+  }
+
+  async function deletePlannerFile(blobId) {
+    const state = B.get();
+    const index = state.plannerFiles.findIndex(function (item) { return item.blobId === blobId; });
+    if (index === -1) throw new Error("File Planner tidak ditemukan.");
+    const record = state.plannerFiles[index];
+    state.plannerFiles.splice(index, 1);
+    try {
+      persist();
+      await removeBlob(blobId);
+    } catch (error) {
+      state.plannerFiles.splice(index, 0, record);
+      persist();
+      throw new Error("File Planner gagal dihapus.");
+    }
+    return record;
+  }
+
+  async function deleteWorkspaceFile(blobId) {
+    const state = B.get();
+    const index = state.workspaceFiles.findIndex(function (item) { return item.blobId === blobId; });
+    if (index === -1) throw new Error("File style tidak ditemukan.");
+    const record = state.workspaceFiles[index];
+    state.workspaceFiles.splice(index, 1);
+    try {
+      persist();
+      await removeBlob(blobId);
+    } catch (error) {
+      state.workspaceFiles.splice(index, 0, record);
+      persist();
+      throw new Error("File gagal dihapus.");
+    }
+    return record;
+  }
+
   async function downloadFile(blobId, fileName, fileType) {
     const blob = await readBlob(blobId);
     const url = URL.createObjectURL(new Blob([blob], { type: fileType || blob.type }));
@@ -372,13 +637,90 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  async function getPreviewBlob(blobId, fileType) {
+    const blob = await readBlob(blobId);
+    return new Blob([blob], { type: fileType || blob.type });
+  }
+
+  function foldersForStyle(styleId) {
+    const state = B.get();
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    return Array.isArray(state.styleFolders[styleId]) ? state.styleFolders[styleId].slice() : [];
+  }
+
+  function addStyleFolder(styleId, name) {
+    const style = B.styleById(styleId);
+    if (!style) throw new Error("Style tidak ditemukan.");
+    const folder = String(name || "").trim();
+    if (!folder) throw new Error("Nama folder wajib diisi.");
+    if (folder.length > 60) throw new Error("Nama folder maksimal 60 karakter.");
+    const state = B.get();
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    const folders = foldersForStyle(styleId);
+    if (folders.some(function (item) { return item.toLowerCase() === folder.toLowerCase(); })) {
+      throw new Error("Folder tersebut sudah ada untuk style ini.");
+    }
+    folders.push(folder);
+    state.styleFolders[styleId] = folders;
+    persist();
+    return folder;
+  }
+
+  function renameStyleFolder(styleId, oldName, newName) {
+    const style = B.styleById(styleId);
+    if (!style) throw new Error("Style tidak ditemukan.");
+    const oldFolder = String(oldName || "").trim();
+    const folder = String(newName || "").trim();
+    if (!oldFolder || !folder) throw new Error("Nama folder tidak boleh kosong.");
+    if (folder.length > 60) throw new Error("Nama folder maksimal 60 karakter.");
+    const state = B.get();
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    const folders = foldersForStyle(styleId);
+    if (!folders.includes(oldFolder)) throw new Error("Folder tidak ditemukan.");
+    if (folder !== oldFolder && folders.some(function (item) { return item.toLowerCase() === folder.toLowerCase(); })) {
+      throw new Error("Folder dengan nama tersebut sudah ada.");
+    }
+
+    const previous = folders.slice();
+    state.styleFolders[styleId] = folders.map(function (item) { return item === oldFolder ? folder : item; });
+    state.workspaceFiles.forEach(function (record) {
+      if (record.styleId !== styleId || !Array.isArray(record.folders)) return;
+      record.folders = record.folders.map(function (item) { return item === oldFolder ? folder : item; });
+    });
+    try { persist(); } catch (error) { state.styleFolders[styleId] = previous; throw error; }
+    return folder;
+  }
+
+  function deleteStyleFolder(styleId, folderName) {
+    const style = B.styleById(styleId);
+    if (!style) throw new Error("Style tidak ditemukan.");
+    const state = B.get();
+    state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+    const previousFolders = foldersForStyle(styleId);
+    if (!previousFolders.includes(folderName)) throw new Error("Folder tidak ditemukan.");
+
+    state.styleFolders[styleId] = previousFolders.filter(function (item) { return item !== folderName; });
+    state.workspaceFiles.forEach(function (record) {
+      if (record.styleId !== styleId || !Array.isArray(record.folders)) return;
+      record.folders = record.folders.filter(function (item) { return item !== folderName; });
+    });
+    persist();
+  }
+
   B.WORKSPACE_BUYERS = BUYERS;
   B.WORKSPACE_PRODUCT_GROUPS = PRODUCT_GROUPS;
+  B.STANDARDIZATION_CATEGORIES = STANDARDIZATION_CATEGORIES;
   B.WORKSPACE_DEFAULT_FOLDERS = DEFAULT_FOLDERS;
   B.initWorkspace = ensureWorkspace;
+  B.requestPersistentStorage = requestPersistentStorage;
   B.updateMaster = updateMaster;
   B.addMasterStyle = addMasterStyle;
+  B.upsertMasterStyle = upsertMasterStyle;
+  B.deleteMasterStyle = deleteMasterStyle;
+  B.renameMasterStyle = renameMasterStyle;
+  B.recordIndexImport = recordIndexImport;
   B.addPlannerFile = addPlannerFile;
+  B.deletePlannerFile = deletePlannerFile;
   B.normalizeWorkspaceWeek = normalizeWeek;
   B.addFolder = addFolder;
   B.foldersForBuyer = foldersForBuyer;
@@ -386,4 +728,12 @@
   B.styleFiles = styleFiles;
   B.latestFolderFile = latestFolderFile;
   B.downloadFile = downloadFile;
+  B.getPreviewBlob = getPreviewBlob;
+  B.renamePlannerFile = renamePlannerFile;
+  B.renameWorkspaceFile = renameWorkspaceFile;
+  B.deleteWorkspaceFile = deleteWorkspaceFile;
+  B.foldersForStyle = foldersForStyle;
+  B.addStyleFolder = addStyleFolder;
+  B.renameStyleFolder = renameStyleFolder;
+  B.deleteStyleFolder = deleteStyleFolder;
 })();
