@@ -80,7 +80,14 @@
     if (!file) throw new Error("Pilih file yang akan diunggah.");
     if (!XLSX()) throw new Error("Pustaka pembaca Excel/CSV belum tersedia.");
     return file.arrayBuffer().then(function (buffer) {
-      const workbook = XLSX().read(buffer, { type: "array", cellDates: true });
+      const workbook = XLSX().read(buffer, {
+        type: "array",
+        cellDates: true,
+        dense: true,
+        cellStyles: false,
+        cellNF: false,
+        cellHTML: false
+      });
       const sheetNames = workbook.SheetNames || [];
       const sheetName = sheetNames.find(function (name) { return String(name).trim().toUpperCase() === "PIVOT"; });
       if (!sheetName) throw new Error("Sheet Pivot tidak ditemukan. File harus memiliki worksheet bernama PIVOT.");

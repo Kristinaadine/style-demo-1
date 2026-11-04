@@ -59,7 +59,8 @@
     styleFolder: "",
     folderStyleActive: "",
     styleStandardCategory: "",
-    styleStandardType: ""
+    styleStandardType: "",
+    styleListImportId: "current"
   };
   K.esc = function (value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
@@ -78,22 +79,15 @@
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
   K.toast = function (message, type) {
-    toast.innerHTML = '<span class="toast__message"></span><span class="toast__countdown" aria-label="Notifikasi akan tertutup dalam 4 detik">4</span>';
+    toast.innerHTML = '<span class="toast__message"></span>';
     toast.querySelector(".toast__message").textContent = message;
     toast.dataset.tone = type || "ok";
     toast.classList.add("is-open");
     toast.style.pointerEvents = "none";
     window.clearTimeout(K.toastTimer);
     window.clearInterval(K.toastCountdown);
-    let remaining = 4;
-    K.toastCountdown = window.setInterval(function () {
-      remaining -= 1;
-      const countdown = toast.querySelector(".toast__countdown");
-      if (countdown) countdown.textContent = String(Math.max(remaining, 1));
-      if (remaining <= 0) window.clearInterval(K.toastCountdown);
-    }, 1000);
+    toast.querySelectorAll(".toast__countdown").forEach(function (countdown) { countdown.remove(); });
     K.toastTimer = window.setTimeout(function () {
-      window.clearInterval(K.toastCountdown);
       toast.classList.remove("is-open");
     }, 4000);
   };
@@ -187,11 +181,15 @@
     const navItem = NAV.filter(function (item) {
       return item.id === (info.route === "folder-style" ? "daftar-style" : info.route);
     })[0] || { title: "Folder Style" };
-    const isSubPage = !NAV.some(function (item) { return item.id === info.route; });
+    const isSubPage = !NAV.some(function (item) { return item.id === info.route; }) || Boolean(info.id);
     const backButton = isSubPage
-      ? '<button class="btn topbar-back-btn" onclick="window.history.back()" aria-label="Kembali ke halaman sebelumnya">' +
-          '<i class="ti ti-arrow-left" aria-hidden="true"></i><span>Kembali</span>' +
-        '</button>'
+      ? ((info.route === "folder-style" || (info.route === "daftar-style" && info.id))
+          ? '<a class="btn topbar-back-btn" href="#/daftar-style" aria-label="Kembali ke daftar style">' +
+              '<i class="ti ti-arrow-left" aria-hidden="true"></i><span>Kembali</span>' +
+            '</a>'
+          : '<button class="btn topbar-back-btn" onclick="window.history.back()" aria-label="Kembali ke halaman sebelumnya">' +
+              '<i class="ti ti-arrow-left" aria-hidden="true"></i><span>Kembali</span>' +
+            '</button>')
       : '';
     topbar.innerHTML =
       '<button class="btn nav-toggle" data-workspace-action="toggle-nav" aria-label="Buka navigasi">' +
@@ -247,6 +245,13 @@
   }, true);
 
   document.addEventListener("change", async function (event) {
+    const snapshotMutationControl = event.target.closest("[data-style-preview-replace], [data-style-preview-upload], [data-master-field], [data-master-photo-uploaded], [data-delete-style-row], [data-edit-style-row], [data-toggle-style-file-form], form[data-workspace-form]");
+    if (snapshotMutationControl && ((K.ui.masterImportId && K.ui.masterImportId !== "current") || (K.ui.styleListImportId && K.ui.styleListImportId !== "current"))) {
+      K.toast("Snapshot bersifat hanya-baca. Pilih data aktif untuk mengubah atau menambah data.", "error");
+      if (typeof event.target.value === "string" && event.target.type === "file") event.target.value = "";
+      return;
+    }
+
     const filterSelect = event.target.closest('select[data-filter^="masterFilter."]');
     if (filterSelect) {
       const key = filterSelect.dataset.filter.slice("masterFilter.".length);
@@ -354,8 +359,34 @@
       return;
     }
 
+    if ((K.ui.masterImportId && K.ui.masterImportId !== "current") || (K.ui.styleListImportId && K.ui.styleListImportId !== "current")) {
+      const readonlyControl = event.target.closest("[data-master-field], [data-master-photo-uploaded], [data-delete-style-row], [data-edit-style-row], [data-style-preview-replace], [data-style-preview-upload]");
+      if (readonlyControl) {
+        K.toast("Snapshot bersifat hanya-baca. Pilih Data Master Aktif untuk mengubah data.", "error");
+        return;
+      }
+    }
+
+    const photoUploaded = event.target.closest("[data-master-photo-uploaded]");
+    if (photoUploaded) {
+      try {
+        const isChecked = event.target.checked === true;
+        B.updateMaster(photoUploaded.dataset.styleId, "photoUploaded", isChecked);
+        photoUploaded.setAttribute("aria-label", isChecked ? "Foto sudah diunggah" : "Foto belum diunggah");
+        K.toast(isChecked ? "Foto ditandai sudah diunggah." : "Checklist foto dikosongkan kembali.");
+      } catch (error) {
+        photoUploaded.checked = !photoUploaded.checked;
+        K.toast(error.message, "error");
+      }
+      return;
+    }
+
     const field = event.target.closest("[data-master-field]");
     if (field) {
+      if (field.dataset.masterField === "templatePhotoStatus") {
+        field.classList.toggle("master-template-status--ready", field.value === "ready");
+        field.classList.toggle("master-template-status--missing", field.value !== "ready");
+      }
       try {
         if (field.dataset.masterField === "id") {
           const newId = B.renameMasterStyle(field.dataset.styleId, field.value);
@@ -524,6 +555,10 @@
     const form = event.target.closest("form[data-workspace-form]");
     if (!form) return;
     event.preventDefault();
+    if ((K.ui.masterImportId && K.ui.masterImportId !== "current") || (K.ui.styleListImportId && K.ui.styleListImportId !== "current")) {
+      K.toast("Snapshot bersifat hanya-baca. Pilih Data Master Aktif untuk mengubah atau menambah data.", "error");
+      return;
+    }
     const requiredControls = Array.from(form.querySelectorAll("[required]"));
     const emptyControl = requiredControls.find(function (control) {
       if (control.disabled || !control.offsetParent) return false;
@@ -735,6 +770,21 @@
   });
 
   document.addEventListener("click", async function (event) {
+    const snapshotMutationControl = event.target.closest("[data-delete-style-row], [data-edit-style-row], [data-rename-style-folder-root], [data-delete-style-folder-root], [data-toggle-style-file-form], [data-rename-file], [data-delete-file], [data-delete-style-folder], [data-style-preview-replace], [data-style-preview-upload]");
+    if (snapshotMutationControl && ((K.ui.masterImportId && K.ui.masterImportId !== "current") || (K.ui.styleListImportId && K.ui.styleListImportId !== "current"))) {
+      K.toast("Snapshot bersifat hanya-baca. Pilih data aktif untuk mengubah atau menghapus data.", "error");
+      return;
+    }
+
+    const cancelAddMasterStyle = event.target.closest("[data-cancel-add-master-style]");
+    if (cancelAddMasterStyle) {
+      const form = cancelAddMasterStyle.closest("form");
+      if (form) form.reset();
+      const panel = cancelAddMasterStyle.closest("details");
+      if (panel) panel.open = false;
+      return;
+    }
+
     const closeToast = event.target.closest("[data-close-toast]");
     if (closeToast) {
       toast.classList.remove("is-open");
@@ -767,6 +817,63 @@
       return;
     }
 
+    const renameMasterImport = event.target.closest("[data-rename-master-import]");
+    if (renameMasterImport) {
+      const batchId = renameMasterImport.dataset.renameMasterImport;
+      const batch = (B.get().masterImportBatches || []).find(function (item) { return item.id === batchId; });
+      if (!batch) { K.toast("Folder/snapshot import tidak ditemukan.", "error"); return; }
+      const newName = await K.prompt("Edit Folder Import Data Master", "Nama folder / file snapshot", batch.fileName || "", "Simpan Perubahan");
+      if (newName != null) {
+        try { B.renameMasterImportBatch(batchId, newName); K.toast("Nama folder import berhasil diperbarui."); render(); }
+        catch (error) { K.toast(error.message, "error"); }
+      }
+      return;
+    }
+
+    const deleteMasterImport = event.target.closest("[data-delete-master-import]");
+    if (deleteMasterImport) {
+      const batchId = deleteMasterImport.dataset.deleteMasterImport;
+      const batch = (B.get().masterImportBatches || []).find(function (item) { return item.id === batchId; });
+      if (!batch) { K.toast("Folder/snapshot import tidak ditemukan.", "error"); return; }
+      const confirmed = await K.confirm(
+        'Hapus folder/snapshot "' + (batch.fileName || "Import Data Master") + '"? Data Master aktif dan isi file Planner tidak akan dihapus.',
+        "Hapus Folder",
+        "Batalkan"
+      );
+      if (confirmed) {
+        try {
+          B.deleteMasterImportBatch(batchId);
+          if (K.ui.masterImportId === batchId) K.ui.masterImportId = "current";
+          if (K.ui.styleListImportId === batchId) K.ui.styleListImportId = "current";
+          K.toast("Folder/snapshot import berhasil dihapus."); render();
+        } catch (error) { K.toast(error.message, "error"); }
+      }
+      return;
+    }
+
+    const styleImportBatch = event.target.closest("[data-style-import-batch]");
+    if (styleImportBatch) {
+      const selectedId = styleImportBatch.dataset.styleImportBatch;
+      K.ui.styleListImportId = selectedId;
+      render();
+      return;
+    }
+
+    const masterCurrentBatch = event.target.closest("[data-master-current-batch]");
+    if (masterCurrentBatch) {
+      K.ui.masterImportId = "current";
+      render();
+      return;
+    }
+
+    const masterImportBatch = event.target.closest("[data-master-import-batch]");
+    if (masterImportBatch) {
+      const selectedId = masterImportBatch.dataset.masterImportBatch;
+      K.ui.masterImportId = K.ui.masterImportId === selectedId ? "current" : selectedId;
+      render();
+      return;
+    }
+
     const closeStyleIndex = event.target.closest("[data-close-style-index]");
     if (closeStyleIndex) {
       const panel = closeStyleIndex.closest("details");
@@ -787,9 +894,27 @@
       const blobId = importPlannerBtn.dataset.blobId;
       const fileName = importPlannerBtn.dataset.fileName;
       const fileType = importPlannerBtn.dataset.fileType;
+      const previousImports = (B.get().indexImports || []).filter(function (item) {
+        return String(item.fileName || "").trim().toLowerCase() === String(fileName || "").trim().toLowerCase();
+      });
+      if (previousImports.length) {
+        const confirmedAgain = await K.confirm(
+          'Peringatan duplikasi: file "' + fileName + '" sudah pernah di-import ' + previousImports.length + ' kali. Mengimport ulang dapat membuat folder/ snapshot dan data style baru ganda.',
+          "Tetap import ulang",
+          "Batalkan"
+        );
+        if (!confirmedAgain) return;
+        const confirmedSecond = await K.confirm(
+          "Konfirmasi kedua: Anda yakin ingin mengimport file yang sama kembali?",
+          "Ya, import ulang",
+          "Batalkan"
+        );
+        if (!confirmedSecond) return;
+      }
       try {
         importPlannerBtn.disabled = true;
-        importPlannerBtn.textContent = "Membaca…";
+        importPlannerBtn.textContent = "Membaca file…";
+        await new Promise(function (resolve) { setTimeout(resolve, 30); });
         const blob = await B.getPreviewBlob(blobId, fileType);
         const file = new File([blob], fileName, { type: fileType });
         let parsed = await BRAImportEngine.readPivotSheet(file);
@@ -833,8 +958,9 @@
               '<div class="import-preview-table"><table class="table"><thead><tr>' + previewHeaders.map(function (h) { return '<th>' + K.esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
               previewRows.map(function (row) { return '<tr>' + previewHeaders.map(function (h) { return '<td>' + K.esc(row[h]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
               '<details style="margin-top:12px"><summary>Daftar pemetaan kolom (' + Object.keys(currentMapping).length + ' field)</summary><table class="table"><tbody>' + mappingRows + '</tbody></table></details>' +
-              '<div class="confirm-modal__actions"><button type="button" class="btn" data-import-preview-cancel>Batal</button><button type="button" class="btn-primary" data-import-preview-ok>Validasi & Simpan ke Data Master</button></div>' +
-            '</div></div>';
+            '</div>' +
+            '<div class="import-preview-footer"><button type="button" class="btn" data-import-preview-cancel>Batal</button><button type="button" class="btn-primary" data-import-preview-ok><i class="ti ti-upload"></i> Import ke Data Master</button></div>' +
+            '</div>';
 
           modal.querySelector("[data-import-preview-close]").addEventListener("click", function () { modal.hidden = true; resolvePreview(false); });
           modal.querySelector("[data-import-preview-cancel]").addEventListener("click", function () { modal.hidden = true; resolvePreview(false); });
@@ -846,16 +972,18 @@
         const confirmed = await new Promise(function (resolve) { resolvePreview = resolve; modal.hidden = false; renderPreview(); });
         if (!confirmed) return;
 
-        let added = 0; let replaced = 0; let skipped = 0;
+        let skipped = 0;
         const seen = {};
         const duplicateKeys = {};
         const importedStyleIds = [];
+        const inputs = [];
+        importPlannerBtn.textContent = "Memproses data…";
         parsed.rows.forEach(function (row) {
-          const currentMapping = BRAImportEngine.buildMapping(parsed.headers, schema);
+          const currentMapping = mapping;
           const product = String(row[currentMapping.style] || "").trim();
           if (!product) { skipped++; return; }
           const key = product.toLowerCase();
-          if (seen[key]) { duplicateKeys[key] = (duplicateKeys[key] || 0) + 1; skipped++; return; }
+          if (seen[key]) duplicateKeys[key] = (duplicateKeys[key] || 0) + 1;
           seen[key] = true;
           const buyerText = String(row[currentMapping.buyer] || "").trim();
           const buyerAliases = {
@@ -911,38 +1039,42 @@
           }
           const bondingText = String(row[currentMapping.bonding] || "").trim().toUpperCase();
           const nb = bondingText.indexOf("BOND") !== -1 ? (bondingText.indexOf("NON") === -1 ? "B" : "NB") : "";
-          try {
-            const existing = B.get().styles.find(function (style) { return String(style.id || "").toLowerCase() === key; });
-            const result = B.upsertMasterStyle({
-              product: product, buyer: buyer,
-              description: String(row[currentMapping.description] || "").trim(),
-              week: String(row[currentMapping.week] || plannerWeek || "").trim(),
-              opd: BRAImportEngine.formatDate(row[currentMapping.opd]),
-              deliveryDate: BRAImportEngine.formatDate(row[currentMapping.delivery]),
-              productGroupMaster: productGroupMaster,
-              nb: nb,
-              picMaster: String(row[currentMapping.pic] || "").trim(),
-              smv: String(row[currentMapping.smv] || "").trim(),
-              remark: String(row[currentMapping.remark] || "").trim(),
-              preserveMissing: selectedMode === "preserve"
-            });
-            if (importedStyleIds.indexOf(result.style.id) === -1) importedStyleIds.push(result.style.id);
-            if (existing || result.replaced) replaced++; else added++;
-          } catch (e) { skipped++; }
+          const importedInput = {
+            product: product, buyer: buyer,
+            description: String(row[currentMapping.description] || "").trim(),
+            week: String(row[currentMapping.week] || plannerWeek || "").trim(),
+            opd: BRAImportEngine.formatDate(row[currentMapping.opd]),
+            deliveryDate: BRAImportEngine.formatDate(row[currentMapping.delivery]),
+            productGroupMaster: productGroupMaster,
+            nb: nb,
+            picMaster: String(row[currentMapping.pic] || "").trim(),
+            smv: String(row[currentMapping.smv] || "").trim(),
+            remark: String(row[currentMapping.remark] || "").trim(),
+            preserveMissing: selectedMode === "preserve"
+          };
+          const existingIndex = inputs.findIndex(function (input) {
+            return String(input.product || "").toLowerCase() === key;
+          });
+          if (existingIndex === -1) {
+            inputs.push(importedInput);
+          } else {
+            skipped++;
+            const existingInput = inputs[existingIndex];
+            const existingDelivery = String(existingInput.deliveryDate || "");
+            const newDelivery = String(importedInput.deliveryDate || "");
+            if (newDelivery && (!existingDelivery || newDelivery > existingDelivery)) {
+              inputs[existingIndex] = importedInput;
+            }
+          }
+          if (importedStyleIds.indexOf(product) === -1) importedStyleIds.push(product);
         });
-        const pivotKeys = {};
-        parsed.rows.forEach(function (row) {
-          const mapping = BRAImportEngine.buildMapping(parsed.headers, schema);
-          const product = String(row[mapping.style] || "").trim();
-          if (product) pivotKeys[product.toLowerCase()] = true;
-        });
-        const staleStyles = B.get().styles.filter(function (style) {
-          return !pivotKeys[String(style.id || "").trim().toLowerCase()];
-        });
-        let removed = 0;
-        for (const staleStyle of staleStyles) {
-          try { await B.deleteMasterStyle(staleStyle.id); removed++; } catch (e) { skipped++; }
-        }
+        importPlannerBtn.textContent = "Memperbarui Data Master…";
+        await new Promise(function (resolve) { setTimeout(resolve, 30); });
+        const batchResult = await B.applyMasterImport(inputs, importedStyleIds);
+        const added = batchResult.added;
+        const replaced = batchResult.replaced;
+        const removed = batchResult.removed;
+        skipped += batchResult.skipped;
         B.recordIndexImport({ fileName: fileName, sheetName: parsed.sheetName, importedAt: new Date().toISOString(), added: added, replaced: replaced, removed: removed, skipped: skipped, rowCount: parsed.detailRowCount || parsed.rows.length, styleRowCount: parsed.explicitStyleCells || parsed.rows.length, uniqueStyleCount: parsed.uniqueStyleCount || parsed.rows.length, rowCountUnique: parsed.rows.length, styleIds: importedStyleIds });
         const masterCount = B.get().styles.length;
         K.toast("Sinkronisasi Pivot selesai: " + masterCount + " style di Data Master (" + removed + " lama dihapus). Hanya Style yang ada di sheet PIVOT yang dipertahankan.");
@@ -1013,6 +1145,8 @@
         for (const id of ids) {
           try { await B.deleteMasterStyle(id); } catch (e) { /* lewati jika sudah terhapus */ }
         }
+        K.ui.masterImportId = "current";
+        K.ui.styleListImportId = "current";
         K.toast("Semua data style berhasil dihapus. Silakan import file baru.");
         render();
       } catch (error) {
@@ -1173,7 +1307,7 @@
 
     const styleRow = event.target.closest("[data-style-row]");
     if (styleRow && !event.target.closest("a")) {
-      window.location.hash = "#/daftar-style/" + encodeURIComponent(styleRow.dataset.styleRow);
+      window.location.hash = "#/folder-style/" + encodeURIComponent(styleRow.dataset.styleRow);
       return;
     }
 
@@ -1181,7 +1315,7 @@
     if (openFolder) {
       event.preventDefault();
       K.ui.styleFolder = openFolder.dataset.openStyleFolder;
-      window.location.hash = "#/daftar-style/" + encodeURIComponent(openFolder.dataset.styleId);
+      window.location.hash = "#/folder-style/" + encodeURIComponent(openFolder.dataset.styleId);
       return;
     }
 

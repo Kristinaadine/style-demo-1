@@ -9,13 +9,23 @@
   const K = window.K;
 
   function viewStyleList(params) {
-    const allStyles = B.get().styles;
+    const batches = B.get().masterImportBatches || [];
+    if (!K.ui.styleListImportId) K.ui.styleListImportId = "current";
+    const activeBatch = K.ui.styleListImportId === "current"
+      ? null
+      : (batches.find(function (batch) { return batch.id === K.ui.styleListImportId; }) || null);
+    const allStyles = activeBatch && Array.isArray(activeBatch.styles)
+      ? activeBatch.styles
+      : B.get().styles;
     const buyers = B.WORKSPACE_BUYERS.concat(allStyles.map(function (style) {
       return style.buyer;
     }).filter(function (buyer, index, list) {
       return buyer && B.WORKSPACE_BUYERS.indexOf(buyer) === -1 && list.indexOf(buyer) === index;
     }).sort());
-    const routeStyle = params.id ? B.styleById(params.id) : null;
+    const routeStyle = params.id
+      ? (activeBatch ? allStyles.find(function (style) { return String(style.id) === String(params.id); }) : B.styleById(params.id))
+      : null;
+    const snapshotReadonly = !!activeBatch;
     const buyer = routeStyle ? routeStyle.buyer : K.ui.styleBuyer;
     const styles = allStyles.filter(function (style) {
       const matchesBuyer = !buyer || style.buyer === buyer;
@@ -27,12 +37,12 @@
       ? routeStyle
       : (styles[0] || null);
     const currentBuyer = currentStyle ? currentStyle.buyer : buyer;
-    const allStyleFiles = currentStyle ? B.styleFiles(currentStyle.id) : [];
+    const allStyleFiles = !snapshotReadonly && currentStyle ? B.styleFiles(currentStyle.id) : [];
     const styleList = styles.map(function (style) {
       const active = currentStyle && style.id === currentStyle.id;
-      const folders = B.foldersForStyle(style.id);
+      const folders = snapshotReadonly ? (Array.isArray(style.folders) ? style.folders : [style.id].filter(Boolean)) : B.foldersForStyle(style.id);
       const folderName = folders.indexOf(style.id) !== -1 ? style.id : (folders[0] || "");
-      const actions = folderName
+      const actions = !snapshotReadonly && folderName
         ? '<div class="style-folder-row-actions">' +
             '<button type="button" class="icon-btn" data-rename-style-folder-root="' + K.esc(folderName) + '" data-style-id="' + K.esc(style.id) + '" title="Rename folder"><i class="ti ti-pencil"></i><span class="sr-only">Rename folder</span></button>' +
             '<button type="button" class="icon-btn icon-btn--danger" data-delete-style-folder-root="' + K.esc(folderName) + '" data-style-id="' + K.esc(style.id) + '" title="Hapus folder"><i class="ti ti-trash"></i><span class="sr-only">Hapus folder</span></button>' +
@@ -48,11 +58,13 @@
         '<i class="ti ti-chevron-right" aria-hidden="true"></i><span class="sr-only">Buka folder ' + K.esc(style.id) + "</span></a></div></div>";
     }).join("");
 
-    const currentFolders = currentStyle ? B.foldersForStyle(currentStyle.id) : [];
+    const currentFolders = snapshotReadonly && currentStyle
+      ? (Array.isArray(currentStyle.folders) ? currentStyle.folders : [currentStyle.id].filter(Boolean))
+      : (currentStyle ? B.foldersForStyle(currentStyle.id) : []);
     const currentAutoFolder = currentFolders.indexOf(currentStyle ? currentStyle.id : "") !== -1;
-    const addFileButton = '<button type="button" class="btn-primary style-add-file-button" data-toggle-style-file-form aria-expanded="false">' +
+    const addFileButton = snapshotReadonly ? '<button type="button" class="btn-primary style-add-file-button" disabled title="Snapshot hanya-baca"><i class="ti ti-lock" aria-hidden="true"></i>Hanya-baca</button>' : '<button type="button" class="btn-primary style-add-file-button" data-toggle-style-file-form aria-expanded="false">' +
       '<i class="ti ti-plus" aria-hidden="true"></i>Tambah File</button>'; 
-    const autoFolderActions = currentStyle && currentAutoFolder
+    const autoFolderActions = !snapshotReadonly && currentStyle && currentAutoFolder
       ? '<button type="button" class="icon-btn" data-rename-style-folder-root="' + K.esc(currentStyle.id) + '" data-style-id="' + K.esc(currentStyle.id) + '" title="Rename folder"><i class="ti ti-pencil"></i></button>' +
         '<button type="button" class="icon-btn icon-btn--danger" data-delete-style-folder-root="' + K.esc(currentStyle.id) + '" data-style-id="' + K.esc(currentStyle.id) + '" title="Hapus folder"><i class="ti ti-trash"></i></button>'
       : "";
@@ -116,27 +128,29 @@
     }
 
     const tableRows = styles.map(function (style) {
-      const fileCount = B.styleFiles(style.id).length;
-      const preview = latestStylePreview(style.id);
-      const previewCell = preview
-        ? '<div class="style-preview-wrap"><button type="button" class="style-preview-button" data-preview-kind="style" data-blob-id="' + K.esc(preview.blobId) + '" data-file-name="' + K.esc(preview.name) + '" data-file-type="' + K.esc(preview.type) + '" title="Preview foto running style"><img data-style-thumbnail data-thumb-blob-id="' + K.esc(preview.previewBlobId || "") + '" data-full-blob-id="' + K.esc(preview.blobId) + '" alt="Foto ' + K.esc(style.id) + '"><span class="style-preview-placeholder"><i class="ti ti-photo"></i></span></button><label class="style-preview-replace" title="Ganti foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-replace data-style-id="' + K.esc(style.id) + '"><i class="ti ti-refresh"></i></label></div>'
-        : '<label class="style-preview-button style-preview-button--upload" title="Upload foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-upload data-style-id="' + K.esc(style.id) + '"><span><i class="ti ti-photo-plus"></i><small>Upload</small></span></label>';
+      const fileCount = snapshotReadonly ? 0 : B.styleFiles(style.id).length;
+      const preview = snapshotReadonly ? null : latestStylePreview(style.id);
+      const previewCell = snapshotReadonly
+        ? '<div class="style-preview-wrap"><span class="style-preview-button" title="File snapshot tidak menyimpan foto aktif"><span><i class="ti ti-lock"></i><small>Snapshot</small></span></span></div>'
+        : preview
+          ? '<div class="style-preview-wrap"><button type="button" class="style-preview-button" data-preview-kind="style" data-blob-id="' + K.esc(preview.blobId) + '" data-file-name="' + K.esc(preview.name) + '" data-file-type="' + K.esc(preview.type) + '" title="Preview foto running style"><img data-style-thumbnail data-thumb-blob-id="' + K.esc(preview.previewBlobId || "") + '" data-full-blob-id="' + K.esc(preview.blobId) + '" alt="Foto ' + K.esc(style.id) + '"><span class="style-preview-placeholder"><i class="ti ti-photo"></i></span></button><label class="style-preview-replace" title="Ganti foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-replace data-style-id="' + K.esc(style.id) + '"><i class="ti ti-refresh"></i></label></div>'
+          : '<label class="style-preview-button style-preview-button--upload" title="Upload foto running style"><input hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" data-style-preview-upload data-style-id="' + K.esc(style.id) + '"><span><i class="ti ti-photo-plus"></i><small>Upload</small></span></label>';
       return '<tr>' +
         '<td class="style-preview-cell">' + previewCell + '</td>' +
         '<td><a class="style-number-link mono" href="#/folder-style/' + encodeURIComponent(style.id) + '" title="Buka folder Style ' + K.esc(style.id) + '"><i class="ti ti-folder-open" aria-hidden="true"></i><span>' + K.esc(style.id) + '</span></a></td>' +
-        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="desc" value="' + K.esc(style.desc || '') + '" placeholder="Nama style"></td>' +
-        '<td><select class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="buyer">' + buyers.map(function (value) {
+        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="desc" value="' + K.esc(style.desc || '') + '" placeholder="Nama style"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
+        '<td><select class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="buyer"' + (snapshotReadonly ? ' disabled' : '') + '>' + buyers.map(function (value) {
           return '<option value="' + K.esc(value) + '"' + (value === style.buyer ? ' selected' : '') + '>' + K.esc(value) + '</option>';
         }).join('') + '</select></td>' +
-        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="picMaster" value="' + K.esc(style.picMaster || '') + '" placeholder="PIC"></td>' +
-        '<td><input class="master-cell-input master-cell-input--narrow" type="number" min="0" step="0.01" data-style-id="' + K.esc(style.id) + '" data-master-field="smv" value="' + K.esc(style.smv || '') + '"></td>' +
-        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="remark" value="' + K.esc(style.remark || '') + '" placeholder="Keterangan"></td>' +
+        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="picMaster" value="' + K.esc(style.picMaster || '') + '" placeholder="PIC"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
+        '<td><input class="master-cell-input master-cell-input--narrow" type="number" min="0" step="0.01" data-style-id="' + K.esc(style.id) + '" data-master-field="smv" value="' + K.esc(style.smv || '') + '"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
+        '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="remark" value="' + K.esc(style.remark || '') + '" placeholder="Keterangan"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
         '<td><a class="btn" href="#/folder-style/' + encodeURIComponent(style.id) + '"><i class="ti ti-folder-open"></i>Buka <span class="hint">' + fileCount + '</span></a></td>' +
-        '<td><div class="master-row-actions"><button type="button" class="icon-btn icon-btn--danger" data-delete-style-row="' + K.esc(style.id) + '" title="Hapus"><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></td>' +
+        '<td><div class="master-row-actions"><button type="button" class="icon-btn icon-btn--danger" data-delete-style-row="' + K.esc(style.id) + '" title="Hapus"' + (snapshotReadonly ? ' disabled' : '') + '><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></td>' +
       '</tr>';
     }).join("");
 
-    const importPanel = '<details class="panel style-index-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah / Upload Data Style</summary>' +
+    const importPanel = snapshotReadonly ? '<div class="panel style-index-add-panel"><div class="empty"><strong>Mode snapshot hanya-baca</strong><br><span>Pilih "Data Aktif" untuk mengubah atau menambah style.</span></div></div>' : '<details class="panel style-index-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah / Upload Data Style</summary>' +
       '<div class="style-index-add-grid"><button type="button" class="style-index-close" data-close-style-index aria-label="Tutup form"><i class="ti ti-x"></i></button>' +
       '<section class="style-index-entry-card"><div class="style-index-entry-card__head"><i class="ti ti-edit"></i><div><strong>Isi Manual</strong><span>Tambah satu style ke tabel master</span></div></div>' +
       '<form class="workspace-form workspace-form--grid" data-workspace-form="add-style">' +
@@ -153,6 +167,27 @@
       '<div class="field field--wide"><label for="style-index-remark">Remark</label><input id="style-index-remark" name="remark"></div>' +
       '<button type="submit" class="btn-primary"><i class="ti ti-plus"></i>Simpan Style</button></form></section>' +
       '</div></details>';
+
+    const batchNameCounts = new Map();
+    batches.forEach(function (batch) {
+      const name = String(batch.fileName || "Import Data Master").trim().toLowerCase();
+      batchNameCounts.set(name, (batchNameCounts.get(name) || 0) + 1);
+    });
+    const batchCards = batches.map(function (batch) {
+      const selected = activeBatch && activeBatch.id === batch.id;
+      const styleCount = Array.isArray(batch.styles) ? batch.styles.length : 0;
+      const normalizedName = String(batch.fileName || "Import Data Master").trim().toLowerCase();
+      const duplicateCount = batchNameCounts.get(normalizedName) || 0;
+      const duplicateClass = duplicateCount > 1 ? " is-duplicate" : "";
+      const duplicateBadge = duplicateCount > 1 ? '<small class="master-duplicate-badge">Duplikat · muncul ' + duplicateCount + ' kali</small>' : "";
+      return '<div class="master-import-folder-wrap' + duplicateClass + (selected ? ' is-active' : '') + '">' +
+        '<button type="button" class="master-import-folder' + duplicateClass + (selected ? ' is-active' : '') + '" data-style-import-batch="' + K.esc(batch.id) + '">' +
+        '<i class="ti ti-folder" aria-hidden="true"></i><span><strong>' + K.esc(batch.fileName || "Import Data Master") + '</strong>' + duplicateBadge +
+        '<small>' + K.esc(K.formatDate(batch.importedAt)) + ' · ' + styleCount + ' style</small></span></button>' +
+        '<div class="master-import-folder-actions"><button type="button" class="icon-btn" data-rename-master-import="' + K.esc(batch.id) + '" title="Edit nama folder"><i class="ti ti-pencil"></i><span class="sr-only">Edit</span></button>' +
+        '<button type="button" class="icon-btn icon-btn--danger" data-delete-master-import="' + K.esc(batch.id) + '" title="Hapus folder"><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></div>';
+    }).join("");
+    const folderPanel = '<section class="panel master-import-folders"><div class="master-import-folders__head"><div><h2 class="section-title">Folder Import Daftar Style</h2><p class="section-note">Pilih file import untuk menampilkan style yang berlaku pada snapshot tersebut.</p></div></div><div class="master-import-folders__list">' + batchCards + '</div></section>';
 
     return '<div class="page-head"><div>' +
       '<h1 class="page-title">Daftar Style</h1>' +
@@ -171,7 +206,7 @@
         '<input hidden id="style-index-file" name="file" data-style-index-file type="file" accept=".xlsx,.xls,.csv" tabindex="-1">' +
         importPanel.replace('<details class="panel style-index-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah / Upload Data Style</summary>', '<details class="style-index-add-panel"><summary class="btn-primary style-index-add-button"><i class="ti ti-plus" aria-hidden="true"></i><span>Tambah Style</span><i class="ti ti-chevron-down style-index-add-chevron" aria-hidden="true"></i></summary>') +
       '</div>' +
-      (B.get().indexImports && B.get().indexImports.length ? '<section class="import-history-panel"><i class="ti ti-file-spreadsheet"></i><div><strong>Import terakhir</strong><span>' + K.esc(B.get().indexImports[0].fileName) + ' · ' + B.get().indexImports[0].rowCount + ' baris · ' + B.get().indexImports[0].added + ' ditambahkan · ' + B.get().indexImports[0].replaced + ' diganti</span></div></section>' : '') +
+      folderPanel +
       '<section class="panel style-index-panel"><div class="table-wrap workspace-table-scroll"><table class="table workspace-master-table"><thead><tr>' +
       '<th>Preview Foto</th><th>Article / Style</th><th>Nama Style</th><th>Buyer</th><th>PIC</th><th>SMV</th><th>Remark</th><th>Folder</th><th>Aksi</th>' +
       '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="9" class="empty">Belum ada data style. Tambahkan atau upload index running style.</td></tr>') + '</tbody></table></div></section>';

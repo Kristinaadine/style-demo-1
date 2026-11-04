@@ -49,7 +49,7 @@
     }).join("");
 
     return '<div class="page-head"><div>' +
-      '<p class="eyebrow"><a class="link" href="#/daftar-style/' + encodeURIComponent(style.id) + '">Daftar Style</a> / Folder Style</p>' +
+      '<p class="eyebrow"><a class="link" href="#/daftar-style">Daftar Style</a> / Folder Style</p>' +
       '<h1 class="page-title">' + K.esc(style.id) + '</h1>' +
       '<p class="page-sub">' + K.esc(style.desc || "") + '</p></div>' +
       '</div>' +

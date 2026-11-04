@@ -40,6 +40,7 @@
   const DB_NAME = "bra-running-style-files";
   const DB_VERSION = 1;
   const FILE_STORE = "blobs";
+  let suppressPersist = false;
   const LEGACY_BUYER = {
     VS: "VS/Victoria's Secret",
     SPANX: "SPX/Spanx",
@@ -82,6 +83,7 @@
       styleFolders: {},
       folderCategories: {},
       indexImports: [],
+      masterImportBatches: [],
       activity: [],
       batches: []
     };
@@ -193,8 +195,13 @@
     const state = B.get();
     state.plannerFiles = Array.isArray(state.plannerFiles) ? state.plannerFiles : [];
     state.indexImports = Array.isArray(state.indexImports) ? state.indexImports : [];
+    state.masterImportBatches = Array.isArray(state.masterImportBatches) ? state.masterImportBatches : [];
     state.workspaceFiles = Array.isArray(state.workspaceFiles) ? state.workspaceFiles : [];
     state.styles = Array.isArray(state.styles) ? state.styles : [];
+    state.styles.forEach(function (style) {
+      if (style.templatePhotoStatus !== "ready" && style.templatePhotoStatus !== "missing") style.templatePhotoStatus = "";
+      style.photoDate = typeof style.photoDate === "string" ? style.photoDate : "";
+    });
     const uniqueStyles = [];
     const styleKeys = {};
     state.styles.forEach(function (style) {
@@ -288,7 +295,7 @@
   }
 
   function updateMaster(id, field, value) {
-    const allowed = ["week", "opd", "deliveryDate", "buyer", "brand", "desc", "productGroupMaster", "nb", "picMaster", "smv", "remark"];
+    const allowed = ["week", "opd", "deliveryDate", "buyer", "brand", "desc", "productGroupMaster", "nb", "picMaster", "smv", "remark", "templatePhotoStatus", "photoDate", "photoUploaded"];
     if (allowed.indexOf(field) === -1) throw new Error("Kolom ini tidak dapat diperbarui.");
     const style = B.styleById(id);
     if (!style) throw new Error("Style tidak ditemukan.");
@@ -305,12 +312,20 @@
     if (field === "smv" && value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
       throw new Error("SMV harus berupa angka nol atau lebih.");
     }
-    if ((field === "opd" || field === "deliveryDate") && value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    if (["opd", "deliveryDate", "photoDate"].indexOf(field) !== -1 && value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       throw new Error("Tanggal harus diisi dengan format yang valid.");
     }
+    if (field === "templatePhotoStatus" && value && ["ready", "missing"].indexOf(value) === -1) {
+      throw new Error("Status template foto tidak valid.");
+    }
 
+    const normalizedValue = field === "smv" && value !== ""
+      ? Number(value)
+      : (field === "photoUploaded"
+        ? (value === true || value === "true" || value === 1)
+        : value);
     const previous = style[field];
-    style[field] = field === "smv" && value !== "" ? Number(value) : value;
+    style[field] = normalizedValue;
     try {
       persist();
     } catch (error) {
@@ -352,7 +367,7 @@
         updatedBy: "Pengguna"
       };
       Object.assign(existing, updates);
-      persist();
+      if (!suppressPersist) persist();
       return { style: existing, replaced: true };
     }
     return { style: addMasterStyle(input), replaced: false };
@@ -393,6 +408,9 @@
       picMaster: String(input.picMaster || "").trim(),
       smv: input.smv ? Number(input.smv) : "",
       remark: String(input.remark || "").trim(),
+      templatePhotoStatus: "",
+      photoDate: "",
+      photoUploaded: false,
       dev: "",
       prod: "",
       sample: "",
@@ -411,7 +429,7 @@
       if (!Array.isArray(B.get().folderCategories[style.buyer])) {
         B.get().folderCategories[style.buyer] = DEFAULT_FOLDERS.slice();
       }
-      persist();
+      if (!suppressPersist) persist();
     } catch (error) {
       B.get().styles.pop();
       throw error;
@@ -495,9 +513,41 @@
   function recordIndexImport(record) {
     const state = B.get();
     state.indexImports = Array.isArray(state.indexImports) ? state.indexImports : [];
+    state.masterImportBatches = Array.isArray(state.masterImportBatches) ? state.masterImportBatches : [];
+    const batchId = "batch-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    record = Object.assign({}, record, {
+      id: batchId,
+      styles: JSON.parse(JSON.stringify(B.get().styles || []))
+    });
     state.indexImports.unshift(record);
-    state.indexImports = state.indexImports.slice(0, 20);
+    state.indexImports = state.indexImports.slice(0, 100);
+    state.masterImportBatches.unshift(record);
+    state.masterImportBatches = state.masterImportBatches.slice(0, 100);
     persist();
+  }
+
+  function renameMasterImportBatch(batchId, newName) {
+    const name = String(newName || "").trim();
+    if (!name) throw new Error("Nama folder/snapshot tidak boleh kosong.");
+    const state = B.get();
+    const batch = (state.masterImportBatches || []).find(function (item) { return item.id === batchId; });
+    if (!batch) throw new Error("Folder/snapshot import tidak ditemukan.");
+    batch.fileName = name;
+    const indexRecord = (state.indexImports || []).find(function (item) { return item.id === batchId; });
+    if (indexRecord) indexRecord.fileName = name;
+    persist();
+    return name;
+  }
+
+  function deleteMasterImportBatch(batchId) {
+    const state = B.get();
+    const batches = state.masterImportBatches || [];
+    const exists = batches.some(function (item) { return item.id === batchId; });
+    if (!exists) throw new Error("Folder/snapshot import tidak ditemukan.");
+    state.masterImportBatches = batches.filter(function (item) { return item.id !== batchId; });
+    state.indexImports = (state.indexImports || []).filter(function (item) { return item.id !== batchId; });
+    persist();
+    return true;
   }
 
   function importedFileStillInMaster(fileName) {
@@ -856,6 +906,52 @@
     persist();
   }
 
+  async function applyMasterImport(inputs, keepIds) {
+    const state = B.get();
+    let added = 0;
+    let replaced = 0;
+    let skipped = 0;
+    suppressPersist = true;
+    try {
+      for (const input of inputs) {
+        try {
+          const result = upsertMasterStyle(input);
+          if (result.replaced) replaced++; else added++;
+        } catch (error) {
+          skipped++;
+        }
+      }
+
+      const keepKeys = {};
+      keepIds.forEach(function (id) { keepKeys[String(id || "").trim().toLowerCase()] = true; });
+      const preserveExisting = inputs.some(function (input) { return input.preserveMissing === true; });
+      const staleStyles = preserveExisting ? [] : state.styles.filter(function (style) {
+        return !keepKeys[String(style.id || "").trim().toLowerCase()];
+      });
+      const staleIds = {};
+      staleStyles.forEach(function (style) { staleIds[String(style.id || "").toLowerCase()] = true; });
+      const removedFiles = state.workspaceFiles.filter(function (record) {
+        return staleIds[String(record.styleId || "").toLowerCase()];
+      });
+      state.styles = state.styles.filter(function (style) {
+        return !staleIds[String(style.id || "").toLowerCase()];
+      });
+      state.workspaceFiles = state.workspaceFiles.filter(function (record) {
+        return !staleIds[String(record.styleId || "").toLowerCase()];
+      });
+      state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
+      staleStyles.forEach(function (style) { delete state.styleFolders[style.id]; });
+      persist();
+      await Promise.all(removedFiles.map(async function (record) {
+        if (record.blobId) await removeBlob(record.blobId);
+        if (record.previewBlobId) await removeBlob(record.previewBlobId);
+      }));
+      return { added: added, replaced: replaced, skipped: skipped, removed: staleStyles.length };
+    } finally {
+      suppressPersist = false;
+    }
+  }
+
   B.WORKSPACE_BUYERS = BUYERS;
   B.WORKSPACE_PRODUCT_GROUPS = PRODUCT_GROUPS;
   B.STANDARDIZATION_CATEGORIES = STANDARDIZATION_CATEGORIES;
@@ -869,6 +965,9 @@
   B.deleteMasterStyle = deleteMasterStyle;
   B.renameMasterStyle = renameMasterStyle;
   B.recordIndexImport = recordIndexImport;
+  B.renameMasterImportBatch = renameMasterImportBatch;
+  B.deleteMasterImportBatch = deleteMasterImportBatch;
+  B.applyMasterImport = applyMasterImport;
   B.importedFileStillInMaster = importedFileStillInMaster;
   B.addPlannerFile = addPlannerFile;
   B.deletePlannerFile = deletePlannerFile;
