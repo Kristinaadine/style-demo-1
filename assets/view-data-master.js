@@ -46,18 +46,10 @@
   }
 
   function viewDataMaster() {
-    const batches = B.get().masterImportBatches || [];
-    if (!K.ui.masterImportId) K.ui.masterImportId = "current";
-    if (!K.ui.masterImportId) K.ui.masterImportId = "current";
-    const activeBatch = K.ui.masterImportId === "current"
-      ? null
-      : (batches.find(function (batch) { return batch.id === K.ui.masterImportId; }) || null);
-    if (K.ui.masterImportId !== "current" && !activeBatch) {
-      K.ui.masterImportId = "current";
-    }
-    const styles = activeBatch && Array.isArray(activeBatch.styles)
-      ? activeBatch.styles
-      : B.get().styles;
+    const plannerFiles = B.get().plannerFiles || [];
+    K.ui.masterImportId = "current";
+    const activeBatch = null;
+    const styles = B.get().styles;
     const duplicateGroups = styles.reduce(function (groups, style) {
       const key = String(style.id || "").trim().replace(/\s+/g, " ").toLowerCase();
       if (!key) return groups;
@@ -71,6 +63,24 @@
     }).filter(function (buyer, index, list) {
       return buyer && buyer !== "ADIDAS" && B.WORKSPACE_BUYERS.indexOf(buyer) === -1 && list.indexOf(buyer) === index;
     }).sort());
+    const normalizeWeekKey = function (value) {
+      return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+    };
+    const selectedWeekKey = normalizeWeekKey(K.ui.masterWeek);
+    const selectedPlannerFiles = selectedWeekKey
+      ? plannerFiles.filter(function (record) { return normalizeWeekKey(record.week) === selectedWeekKey; })
+      : [];
+    const selectedFileNames = selectedPlannerFiles.map(function (record) {
+      return String(record.name || "").trim().toLowerCase();
+    });
+    const selectedStyleIds = new Set();
+    const indexImports = B.get().indexImports || [];
+    indexImports.forEach(function (record) {
+      const recordName = String(record.fileName || "").trim().toLowerCase();
+      if (selectedFileNames.indexOf(recordName) !== -1 && Array.isArray(record.styleIds)) {
+        record.styleIds.forEach(function (styleId) { selectedStyleIds.add(String(styleId).trim().toLowerCase()); });
+      }
+    });
     const filtered = styles.filter(function (style) {
       const template = activeBatch ? null : B.latestFolderFile(style.id, "Template Photo Running Style");
       const photo = activeBatch ? null : B.latestFolderFile(style.id, "Foto Fitting");
@@ -89,6 +99,10 @@
         smv: style.smv,
         remark: style.remark
       };
+      if (selectedWeekKey) {
+        const styleWeek = normalizeWeekKey(style.week);
+        if (styleWeek !== selectedWeekKey) return false;
+      }
       return Object.keys(K.ui.masterFilters).every(function (key) {
         const query = (K.ui.masterFilters[key] || "").trim().toLowerCase();
         return !query || String(values[key] == null ? "" : values[key]).toLowerCase().indexOf(query) !== -1;
@@ -147,36 +161,43 @@
       "</tr>";
     }).join("");
 
-    const batchNameCounts = new Map();
-    batches.forEach(function (batch) {
-      const name = String(batch.fileName || "Import Data Master").trim().toLowerCase();
-      batchNameCounts.set(name, (batchNameCounts.get(name) || 0) + 1);
+    const normalizeWeek = function (value) {
+      return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+    };
+    const plannerFolders = new Map();
+    plannerFiles.forEach(function (record) {
+      const week = String(record.week || "Tanpa WK").trim() || "Tanpa WK";
+      const weekKey = normalizeWeek(week);
+      if (!plannerFolders.has(weekKey)) {
+        plannerFolders.set(weekKey, { week: week, files: [], importedAt: record.receivedAt });
+      }
+      const folder = plannerFolders.get(weekKey);
+      folder.files.push(record);
+      if (!folder.importedAt || String(record.receivedAt || "") > String(folder.importedAt || "")) {
+        folder.importedAt = record.receivedAt;
+      }
     });
-    const duplicateBatchNames = Array.from(batchNameCounts.entries()).filter(function (entry) { return entry[1] > 1; });
-    const batchCards = batches.map(function (batch) {
-      const selected = activeBatch && activeBatch.id === batch.id;
-      const styleCount = Array.isArray(batch.styles) ? batch.styles.length : 0;
-      const normalizedName = String(batch.fileName || "Import Data Master").trim().toLowerCase();
-      const duplicateCount = batchNameCounts.get(normalizedName) || 0;
-      const duplicateClass = duplicateCount > 1 ? " is-duplicate" : "";
-      const duplicateBadge = duplicateCount > 1 ? '<small class="master-duplicate-badge">Duplikat · muncul ' + duplicateCount + ' kali</small>' : "";
-      return '<div class="master-import-folder-wrap' + duplicateClass + (selected ? ' is-active' : '') + '">' +
-        '<button type="button" class="master-import-folder' + duplicateClass + (selected ? ' is-active' : '') + '" data-master-import-batch="' + K.esc(batch.id) + '">' +
-        '<i class="ti ti-folder" aria-hidden="true"></i><span><strong>' + K.esc(batch.fileName || "Import Data Master") + '</strong>' + duplicateBadge +
-        '<small>' + K.esc(K.formatDate(batch.importedAt)) + ' · ' + styleCount + ' style</small></span></button>' +
-        '<div class="master-import-folder-actions"><button type="button" class="icon-btn" data-rename-master-import="' + K.esc(batch.id) + '" title="Edit nama folder"><i class="ti ti-pencil"></i><span class="sr-only">Edit</span></button>' +
-        '<button type="button" class="icon-btn icon-btn--danger" data-delete-master-import="' + K.esc(batch.id) + '" title="Hapus folder"><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></div>';
+    const plannerCards = Array.from(plannerFolders.values()).map(function (folder) {
+      const normalizedWeek = normalizeWeek(folder.week);
+      const selected = normalizeWeek(K.ui.masterWeek) === normalizedWeek;
+      const fileNames = folder.files.map(function (record) { return String(record.name || "").trim().toLowerCase(); });
+      const folderStyleIds = new Set();
+      indexImports.forEach(function (record) {
+        if (fileNames.indexOf(String(record.fileName || "").trim().toLowerCase()) !== -1 && Array.isArray(record.styleIds)) {
+          record.styleIds.forEach(function (styleId) { folderStyleIds.add(String(styleId).trim().toLowerCase()); });
+        }
+      });
+      const styleCount = folderStyleIds.size
+        ? styles.filter(function (style) { return folderStyleIds.has(String(style.id || "").trim().toLowerCase()); }).length
+        : styles.filter(function (style) { return normalizeWeek(style.week) === normalizedWeek; }).length;
+      return '<div class="master-import-folder-wrap' + (selected ? ' is-active' : '') + '">' +
+        '<button type="button" class="master-import-folder' + (selected ? ' is-active' : '') + '" data-master-week="' + K.esc(folder.week) + '" aria-pressed="' + (selected ? 'true' : 'false') + '">' +
+        '<i class="ti ti-folder" aria-hidden="true"></i><span><strong>' + K.esc(folder.week) + '</strong>' +
+        '<small>' + K.esc(K.formatDate(folder.importedAt)) + ' · ' + styleCount + ' style · ' + folder.files.length + ' file Planner</small></span></button></div>';
     }).join("");
-    const activeCard = '<div class="master-import-folder-wrap' + (!activeBatch ? " is-active" : "") + '">' +
-      '<button type="button" class="master-import-folder' + (!activeBatch ? " is-active" : "") + '" data-master-current-batch>' +
-      '<i class="ti ti-table" aria-hidden="true"></i><span><strong>Data Aktif</strong>' +
-      '<small>' + (B.get().styles || []).length + ' style dapat diedit</small></span></button></div>';
-    const duplicateWarning = duplicateBatchNames.length
-      ? '<div class="master-duplicate-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div><strong>Peringatan: ditemukan folder atau snapshot import ganda.</strong><span>' + duplicateBatchNames.map(function (entry) { const sample = batches.find(function (batch) { return String(batch.fileName || "Import Data Master").trim().toLowerCase() === entry[0]; }); return K.esc(sample && sample.fileName ? sample.fileName : "File tidak diketahui") + " muncul " + entry[1] + " kali"; }).join("; ") + '. Kemungkinan file sudah diklik Import ke Data Master lebih dari sekali.</span></div></div>'
-      : "";
-    const batchPanel = batches.length
-      ? '<section class="panel master-import-folders"><div class="master-import-folders__head"><div><h2 class="section-title">Folder Import Data Master</h2><p class="section-note">Pilih "Data Aktif" untuk mengedit, atau pilih snapshot untuk melihat data lama secara hanya-baca.</p></div></div>' + duplicateWarning + '<div class="master-import-folders__list">' + activeCard + batchCards + '</div></section>'
-      : '<section class="panel master-import-folders"><div class="master-import-folders__head"><div><h2 class="section-title">Folder Import Data Master</h2><p class="section-note">Belum ada snapshot. Folder akan otomatis muncul setelah file diimport dari Planner atau Data Master.</p></div></div><div class="master-import-folders__list">' + activeCard + '</div></section>';
+    const selectedWeekLabel = K.ui.masterWeek ? '<button type="button" class="btn" data-master-week-clear><i class="ti ti-x"></i>Tampilkan semua Week</button>' : "";
+    const batchPanel = '<section class="panel master-import-folders"><div class="master-import-folders__head"><div><h2 class="section-title">Folder Week / WK</h2><p class="section-note">Klik folder minggu untuk menampilkan style Data Master pada minggu tersebut.</p></div>' + selectedWeekLabel + '</div>' +
+      '<div class="master-import-folders__list">' + (plannerCards || '<div class="empty">Belum ada file Planner.</div>') + '</div></section>';
 
     return '<div class="page-head"><div>' +
       '<h1 class="page-title">Data Master</h1>' +
@@ -192,9 +213,7 @@
           '<i class="ti ti-trash" aria-hidden="true"></i>Reset Data</button>' +
       "</div></div>" +
       batchPanel +
-      (activeBatch
-        ? '<div class="panel workspace-add-panel"><div class="empty"><strong>Mode snapshot hanya-baca</strong><br><span>Gunakan tombol "Data Aktif" untuk menambah atau mengedit data.</span></div></div>'
-        : '<details class="panel workspace-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah style ke Data Master</summary>' +
+      '<details class="panel workspace-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah style ke Data Master</summary>' +
           '<form class="workspace-form workspace-form--grid" data-workspace-form="add-style">' +
           '<div class="field"><label for="new-product">Article / Product *</label><input id="new-product" name="product" required maxlength="80"></div>' +
           '<div class="field"><label for="new-brand">Brand</label><input id="new-brand" name="brand" maxlength="120" placeholder="Opsional"></div>' +
@@ -212,7 +231,7 @@
           '<div class="field field--wide"><label for="new-remark">Remark / Keterangan</label><input id="new-remark" name="remark" maxlength="500"></div>' +
           '<div class="workspace-form-actions field--wide"><button type="submit" class="btn-primary">Simpan style</button>' +
             '<button type="button" class="btn" data-cancel-add-master-style>Batalkan</button></div>' +
-          "</form></details>") +
+          "</form></details>" +
       '<section class="panel workspace-table-panel' + (activeBatch ? ' master-table-snapshot' : '') + '">' +
         '<div class="panel__head workspace-filter-head"><div><h2 class="section-title">Index running style</h2>' +
           '<p class="section-note master-sync-summary">Menampilkan ' + filtered.length + " dari " + styles.length + " style</p></div></div>" +

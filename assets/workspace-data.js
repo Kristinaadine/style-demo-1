@@ -38,7 +38,7 @@
     ]
   };
   const DB_NAME = "bra-running-style-files";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const FILE_STORE = "blobs";
   let suppressPersist = false;
   const LEGACY_BUYER = {
@@ -75,7 +75,7 @@
     const state = B.get();
     const role = state.role || "md";
     const emptyState = {
-      version: 2,
+      version: 3,
       role: role,
       styles: [],
       plannerFiles: [],
@@ -798,6 +798,7 @@
     try {
       persist();
       await removeBlob(blobId);
+      if (typeof B.deleteDatabaseBlob === "function") await B.deleteDatabaseBlob(blobId);
     } catch (error) {
       state.plannerFiles.splice(index, 0, record);
       persist();
@@ -816,6 +817,10 @@
       persist();
       await removeBlob(blobId);
       if (record.previewBlobId) await removeBlob(record.previewBlobId);
+      if (typeof B.deleteDatabaseBlob === "function") {
+        await B.deleteDatabaseBlob(blobId);
+        if (record.previewBlobId) await B.deleteDatabaseBlob(record.previewBlobId);
+      }
     } catch (error) {
       state.workspaceFiles.splice(index, 0, record);
       persist();
@@ -824,8 +829,20 @@
     return record;
   }
 
+  async function readFileBlob(blobId, fileType) {
+    if (typeof B.readDatabaseBlob === "function") {
+      try {
+        const dbBlob = await B.readDatabaseBlob(blobId, fileType);
+        if (dbBlob) return dbBlob;
+      } catch (_) {
+        // IndexedDB tetap dipakai sebagai fallback.
+      }
+    }
+    return await readBlob(blobId);
+  }
+
   async function downloadFile(blobId, fileName, fileType) {
-    const blob = await readBlob(blobId);
+    const blob = await readFileBlob(blobId, fileType);
     const url = URL.createObjectURL(new Blob([blob], { type: fileType || blob.type }));
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -837,7 +854,7 @@
   }
 
   async function getPreviewBlob(blobId, fileType) {
-    const blob = await readBlob(blobId);
+    const blob = await readFileBlob(blobId, fileType);
     return new Blob([blob], { type: fileType || blob.type });
   }
 
@@ -924,29 +941,8 @@
 
       const keepKeys = {};
       keepIds.forEach(function (id) { keepKeys[String(id || "").trim().toLowerCase()] = true; });
-      const preserveExisting = inputs.some(function (input) { return input.preserveMissing === true; });
-      const staleStyles = preserveExisting ? [] : state.styles.filter(function (style) {
-        return !keepKeys[String(style.id || "").trim().toLowerCase()];
-      });
-      const staleIds = {};
-      staleStyles.forEach(function (style) { staleIds[String(style.id || "").toLowerCase()] = true; });
-      const removedFiles = state.workspaceFiles.filter(function (record) {
-        return staleIds[String(record.styleId || "").toLowerCase()];
-      });
-      state.styles = state.styles.filter(function (style) {
-        return !staleIds[String(style.id || "").toLowerCase()];
-      });
-      state.workspaceFiles = state.workspaceFiles.filter(function (record) {
-        return !staleIds[String(record.styleId || "").toLowerCase()];
-      });
-      state.styleFolders = state.styleFolders && typeof state.styleFolders === "object" ? state.styleFolders : {};
-      staleStyles.forEach(function (style) { delete state.styleFolders[style.id]; });
       persist();
-      await Promise.all(removedFiles.map(async function (record) {
-        if (record.blobId) await removeBlob(record.blobId);
-        if (record.previewBlobId) await removeBlob(record.previewBlobId);
-      }));
-      return { added: added, replaced: replaced, skipped: skipped, removed: staleStyles.length };
+      return { added: added, replaced: replaced, skipped: skipped, removed: 0 };
     } finally {
       suppressPersist = false;
     }
@@ -979,6 +975,7 @@
   B.latestFolderFile = latestFolderFile;
   B.downloadFile = downloadFile;
   B.getPreviewBlob = getPreviewBlob;
+  B.readBlob = readBlob;
   B.renamePlannerFile = renamePlannerFile;
   B.renameWorkspaceFile = renameWorkspaceFile;
   B.deleteWorkspaceFile = deleteWorkspaceFile;

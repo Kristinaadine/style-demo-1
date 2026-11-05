@@ -22,6 +22,7 @@ const express = require("express");
 const cors    = require("cors");
 const routes  = require("./routes");
 
+const db     = require("./db");
 const app    = express();
 const PORT   = Number(process.env.PORT) || 3001;
 const ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:8123";
@@ -30,7 +31,7 @@ const ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:8123";
 
 app.use(cors({
   origin: ORIGIN,
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
 
@@ -58,7 +59,38 @@ app.use((err, req, res, next) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
-  console.log(`[server] BRA Running Style API berjalan di http://localhost:${PORT}`);
-  console.log(`[server] CORS diizinkan dari: ${ORIGIN}`);
+async function ensureFileBlobTable() {
+  if (db.type === "postgres") {
+    await db.run(`CREATE TABLE IF NOT EXISTS file_blobs (
+      blob_id VARCHAR(100) NOT NULL PRIMARY KEY,
+      content BYTEA NOT NULL,
+      mime_type VARCHAR(160),
+      size_bytes BIGINT NOT NULL DEFAULT 0,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+  } else {
+    await db.run(`CREATE TABLE IF NOT EXISTS file_blobs (
+      blob_id VARCHAR(100) NOT NULL PRIMARY KEY,
+      content LONGBLOB NOT NULL,
+      mime_type VARCHAR(160) DEFAULT NULL,
+      size_bytes BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  }
+}
+
+ensureFileBlobTable().then(() => {
+  app.listen(PORT, () => {
+    console.log(`[server] BRA Running Style API berjalan di http://localhost:${PORT}`);
+    console.log(`[server] CORS diizinkan dari: ${ORIGIN}`);
+  });
+}).catch((error) => {
+  console.error("[server] Peringatan: tabel file_blobs belum siap:", error.message);
+  if (error.code === "42501") {
+    console.error("[server] Jalankan sebagai administrator PostgreSQL: GRANT CREATE ON SCHEMA public TO bra_app; GRANT ALL ON ALL TABLES IN SCHEMA public TO bra_app;");
+  }
+  app.listen(PORT, () => {
+    console.log(`[server] BRA Running Style API berjalan di http://localhost:${PORT}`);
+    console.log(`[server] CORS diizinkan dari: ${ORIGIN}`);
+  });
 });

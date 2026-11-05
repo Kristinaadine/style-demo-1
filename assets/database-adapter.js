@@ -40,6 +40,62 @@
     return payload;
   }
 
+  async function readDatabaseBlob(blobId, fileType) {
+    try {
+      const response = await fetch(API_BASE + "/blobs/" + encodeURIComponent(blobId), { cache: "no-store" });
+      if (!response.ok) return null;
+      return await response.blob();
+    } catch (_) {
+      return null;
+    }
+  }
+  async function deleteDatabaseBlob(blobId) {
+    try {
+      const response = await fetch(API_BASE + "/blobs/" + encodeURIComponent(blobId), { method: "DELETE" });
+      const payload = await response.json();
+      return response.ok && payload.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  B.readDatabaseBlob = readDatabaseBlob;
+  B.deleteDatabaseBlob = deleteDatabaseBlob;
+
+  async function migrateIndexedDbBlobs() {
+    const state = B.get();
+    const ids = new Set();
+    (state.plannerFiles || []).forEach(function (file) { if (file.blobId) ids.add(file.blobId); });
+    (state.workspaceFiles || []).forEach(function (file) {
+      if (file.blobId) ids.add(file.blobId);
+      if (file.previewBlobId) ids.add(file.previewBlobId);
+    });
+    if (!B.readBlob || !ids.size) return 0;
+
+    let uploaded = 0;
+    for (const blobId of ids) {
+      try {
+        const existing = await fetch(API_BASE + "/blobs/" + encodeURIComponent(blobId), { cache: "no-store" });
+        if (existing.ok) continue;
+      } catch (_) {}
+      try {
+        const file = await B.readBlob(blobId);
+        const form = new FormData();
+        form.append("file", new Blob([file], { type: file.type || "application/octet-stream" }), blobId);
+        const response = await fetch(API_BASE + "/blobs/" + encodeURIComponent(blobId), {
+          method: "POST",
+          body: form,
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) continue;
+        uploaded++;
+      } catch (_) {
+        continue;
+      }
+    }
+    return uploaded;
+  }
+
   // ── Save state to server ────────────────────────────────────────────────────
 
   async function saveToDatabase() {
@@ -49,8 +105,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(B.get()),
       });
+      const migrated = await migrateIndexedDbBlobs();
       window.dispatchEvent(new CustomEvent("bra-database-status", {
-        detail: { connected: true, db: result.database || "db" },
+        detail: { connected: true, db: result.database || "db", migrated: migrated },
       }));
     } catch (error) {
       window.dispatchEvent(new CustomEvent("bra-database-status", {
@@ -89,6 +146,13 @@
     }
 
     originalBoot();
+
+    // Migrasikan berkas IndexedDB yang belum ada di PostgreSQL.
+    try {
+      await migrateIndexedDbBlobs();
+    } catch (error) {
+      console.warn("Migrasi berkas PostgreSQL belum selesai:", error);
+    }
 
     // Push initial state if server DB is empty
     try {

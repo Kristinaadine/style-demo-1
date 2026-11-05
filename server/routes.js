@@ -6,8 +6,10 @@
 "use strict";
 
 const express = require("express");
+const multer  = require("multer");
 const db      = require("./db");
 const router  = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,17 +46,80 @@ async function getBuyerId(tx, cache, name) {
 router.get("/status", async (req, res) => {
   try {
     await db.ping();
-    const tables = ["buyers", "styles", "folders", "files", "import_batches"];
+    const tables = ["buyers", "styles", "folders", "files", "file_blobs", "import_batches"];
     const counts = {};
     for (const table of tables) {
-      const rows = await db.query(`SELECT COUNT(*) AS n FROM ${table}`);
-      counts[table] = Number(rows[0]?.n ?? rows[0]?.count ?? 0);
+      try {
+        const rows = await db.query(`SELECT COUNT(*) AS n FROM ${table}`);
+        counts[table] = Number(rows[0]?.n ?? rows[0]?.count ?? 0);
+      } catch (err) {
+        if (table !== "file_blobs") throw err;
+        counts[table] = null;
+      }
     }
     const stateRows = await db.query("SELECT COUNT(*) AS n FROM app_state");
     const hasState  = Number(stateRows[0]?.n ?? stateRows[0]?.count ?? 0) > 0;
     res.json({ ok: true, database: db.type, configured: true, has_state: hasState, counts });
   } catch (err) {
     res.status(503).json({ ok: false, message: "Database tidak dapat dihubungi: " + err.message });
+  }
+});
+
+// ── File blob storage (migrasi dari IndexedDB browser ke database) ─────────
+
+router.post("/blobs/:blobId", upload.single("file"), async (req, res) => {
+  try {
+    const blobId = String(req.params.blobId || "").trim().slice(0, 100);
+    if (!blobId) return res.status(422).json({ ok: false, message: "Blob ID wajib diisi." });
+    if (!req.file) return res.status(422).json({ ok: false, message: "Isi berkas wajib dikirim." });
+
+    if (db.type === "postgres") {
+      await db.run(
+        `INSERT INTO file_blobs (blob_id, content, mime_type, size_bytes)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (blob_id) DO UPDATE SET content=EXCLUDED.content,
+           mime_type=EXCLUDED.mime_type, size_bytes=EXCLUDED.size_bytes,
+           updated_at=NOW()`,
+        [blobId, req.file.buffer, req.file.mimetype || "application/octet-stream", req.file.size]
+      );
+    } else {
+      await db.run(
+        `INSERT INTO file_blobs (blob_id, content, mime_type, size_bytes)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE content=VALUES(content), mime_type=VALUES(mime_type),
+           size_bytes=VALUES(size_bytes)`,
+        [blobId, req.file.buffer, req.file.mimetype || "application/octet-stream", req.file.size]
+      );
+    }
+    res.json({ ok: true, blob_id: blobId, size: req.file.size });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+router.delete("/blobs/:blobId", async (req, res) => {
+  try {
+    const blobId = String(req.params.blobId || "").trim().slice(0, 100);
+    await db.run("DELETE FROM file_blobs WHERE blob_id = ?", [blobId]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+router.get("/blobs/:blobId", async (req, res) => {
+  try {
+    const blobId = String(req.params.blobId || "").trim().slice(0, 100);
+    const rows = await db.query("SELECT content, mime_type, size_bytes FROM file_blobs WHERE blob_id = ?", [blobId]);
+    if (!rows.length) return res.status(404).json({ ok: false, message: "Isi berkas tidak ditemukan di database." });
+    let content = rows[0].content;
+    if (!Buffer.isBuffer(content)) content = Buffer.from(content || []);
+    res.setHeader("Content-Type", rows[0].mime_type || "application/octet-stream");
+    res.setHeader("Content-Length", String(rows[0].size_bytes || content.length));
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(content);
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
   }
 });
 

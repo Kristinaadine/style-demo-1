@@ -1,0 +1,8 @@
+{
+    "workbench.colorCustomizations": {
+        "statusBarItem.warningBackground": "#136CFF",
+        "statusBarItem.warningForeground": "#FFFFFF",
+        "statusBarItem.warningHoverBackground": "#136CFF",
+        "statusBarItem.warningHoverForeground": "#FFFFFF"
+    }
+}

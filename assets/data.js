@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  const STORE_KEY = "bra-running-style-v2";
+  const STORE_KEY = "bra-running-style-v3";
 
   const DEPTS = ["MD", "Pattern Maker", "IE-Technical", "Production", "QA"];
   const DOC_CATS = [
@@ -104,265 +104,18 @@
   }
 
   function seed() {
-    const s1 = "10345161";
-    const s2 = "10767R";
-    const s3 = "WC-88214";
-    const s4 = "AD-44082";
-    const s5 = "VS-26018";
-    const s6 = "SP-9120";
-    const s7 = "10455209";
-    const s8 = "10882P";
-    const s9 = "WC-88390";
-    const s10 = "AD-44091";
-    const s11 = "10582310";
-    const s12 = "36662R";
-
     return {
-      version: 2,
+      version: 3,
       role: "md",
-      styles: [
-        style({
-          id: s1, brand: "Victoria's Secret", buyer: "VS", desc: "Wireless Lightly Lined Bra",
-          group: "Women's Wear", color: "Powder pink / Hitam", week: "WK 42",
-          dev: "In Trial", prod: "Belum produksi", sample: "Menunggu konfirmasi", sampleEvidence: false, mc: 1.8,
-          pic: { pattern: "D. Prasetyo", mdmkt: "A. Wulandari", ie: "F. Ramadhan", prod: null, qa: null },
-          notes: "Periksa catatan fitting sebelum putaran sampel berikutnya.",
-          updatedAt: "2026-10-24",
-          docs: [
-            makeDoc(s1, "BOM", [["V2", "Terverifikasi", "R. Santoso", "2026-10-18"], ["V3", "Terverifikasi", "R. Santoso", "2026-10-24", 412]], { MD: "V3", "Pattern Maker": "V3", "IE-Technical": "V3", "Production": "V3", QA: "V3" }),
-            makeDoc(s1, "Material Estimation", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-15"], ["V2", "Terverifikasi", "A. Wulandari", "2026-10-23", 236], ["V3", "Menunggu verifikasi", "A. Wulandari", "2026-10-24", 251]], { MD: "V2", "IE-Technical": "V2", "Production": "V2" }),
-            makeDoc(s1, "HO", [["V1", "Menunggu verifikasi", "D. Prasetyo", "2026-10-22", 248]], { "Pattern Maker": "V1" }),
-            makeDoc(s1, "MC", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-14"], ["V2", "Terverifikasi", "D. Prasetyo", "2026-10-22", 198]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", "Production": "V2", QA: "V2" }),
-            makeDoc(s1, "RA", [], {}),
-            makeDoc(s1, "Foto style", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-16"], ["V2", "Terverifikasi", "A. Wulandari", "2026-10-24", 1840]], {})
-          ],
-          pubs: {
-            FRONT: [
-              { v: "V1", status: "Terbit", file: "FRONT_" + s1 + "_V1.pdf", by: "D. Prasetyo", at: "2026-10-12" },
-              { v: "V2", status: "Terbit", file: "FRONT_" + s1 + "_V2.pdf", by: "A. Wulandari", at: "2026-10-18" },
-              { v: "V3", status: "Terbit", file: "FRONT_" + s1 + "_V3.pdf", by: "D. Prasetyo", at: "2026-10-22" }
-            ],
-            BACK: [
-              { v: "V1", status: "Terbit", file: "BACK_" + s1 + "_V1.pdf", by: "A. Wulandari", at: "2026-10-18" },
-              { v: "V2", status: "Draft", file: "BACK_" + s1 + "_V2.pdf", by: "D. Prasetyo", at: "2026-10-24" }
-            ]
-          }
-        }),
-        style({
-          id: s2, brand: "SPANX", buyer: "SPANX", desc: "Seamless shaping brief",
-          group: "Shapewear", color: "Hitam / Cinnamon", week: "WK 42",
-          dev: "In Development", prod: "Belum produksi", sample: "Diminta", sampleEvidence: true, mc: 2.2,
-          pic: { pattern: "A. Wulandari", mdmkt: "F. Ramadhan", ie: "M. Hidayat", prod: null, qa: "R. Santoso" },
-          notes: "Foto style dan risk analysis perlu tindak lanjut.",
-          updatedAt: "2026-10-23",
-          docs: [
-            makeDoc(s2, "BOM", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-21", 302]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1" }),
-            makeDoc(s2, "Material Estimation", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-21", 214]], { MD: "V1", "IE-Technical": "V1" }),
-            makeDoc(s2, "HO", [], {}),
-            makeDoc(s2, "MC", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-20", 176]], { MD: "V1", "IE-Technical": "V1" }),
-            makeDoc(s2, "RA", [], {}),
-            makeDoc(s2, "Foto style", [], {})
-          ],
-          pubs: {
-            FRONT: [{ v: "V1", status: "Draft", file: "FRONT_" + s2 + "_V1.pdf", by: "A. Wulandari", at: "2026-10-19" }],
-            BACK: []
-          }
-        }),
-        style({
-          id: s3, brand: "Wacoal", buyer: "WACOAL", desc: "Everyday comfort bra",
-          group: "Intimate Wear", color: "Nude / Hitam", week: "WK 41",
-          dev: "Dev selesai", prod: "Pernah produksi", sample: "Selesai", sampleEvidence: true, mc: 2.4,
-          pic: { pattern: "R. Santoso", mdmkt: "N. Kusuma", ie: "F. Ramadhan", prod: "S. Halim", qa: "R. Santoso" },
-          notes: "Style lama, seluruh dokumen sudah terverifikasi.",
-          updatedAt: "2026-10-21",
-          docs: [
-            makeDoc(s3, "BOM", [["V4", "Terverifikasi", "R. Santoso", "2026-10-21", 388]], { MD: "V4", "Pattern Maker": "V4", "IE-Technical": "V4", Production: "V4", QA: "V4" }),
-            makeDoc(s3, "Material Estimation", [["V2", "Terverifikasi", "R. Santoso", "2026-10-20", 202], ["V3", "Terverifikasi", "R. Santoso", "2026-10-21", 208]], { MD: "V3", "Pattern Maker": "V3", "IE-Technical": "V3", Production: "V3", QA: "V3" }),
-            makeDoc(s3, "HO", [["V1", "Terverifikasi", "R. Santoso", "2026-10-18"]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1", Production: "V1", QA: "V1" }),
-            makeDoc(s3, "MC", [["V2", "Terverifikasi", "R. Santoso", "2026-10-19", 164]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", Production: "V2", QA: "V2" }),
-            makeDoc(s3, "RA", [["V1", "Terverifikasi", "R. Santoso", "2026-10-20", 226]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1", Production: "V1", QA: "V1" }),
-            makeDoc(s3, "Foto style", [["V2", "Terverifikasi", "R. Santoso", "2026-10-20", 1620]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", Production: "V2", QA: "V2" })
-          ],
-          pubs: {
-            FRONT: [
-              { v: "V4", status: "Terbit", file: "FRONT_" + s3 + "_V4.pdf", by: "R. Santoso", at: "2026-10-18" },
-              { v: "V5", status: "Terbit", file: "FRONT_" + s3 + "_V5.pdf", by: "R. Santoso", at: "2026-10-20" }
-            ],
-            BACK: [
-              { v: "V3", status: "Terbit", file: "BACK_" + s3 + "_V3.pdf", by: "R. Santoso", at: "2026-10-17" },
-              { v: "V4", status: "Terbit", file: "BACK_" + s3 + "_V4.pdf", by: "R. Santoso", at: "2026-10-20" }
-            ]
-          }
-        }),
-        style({
-          id: s4, brand: "Adidas", buyer: "ADIDAS", desc: "Performance training top",
-          group: "Sports & Activewear", color: "Hitam", week: "WK 41",
-          dev: "Ditahan", prod: "Belum produksi", sample: "Diminta", sampleEvidence: true, mc: 3.1,
-          pic: { pattern: "M. Hidayat", mdmkt: "N. Kusuma", ie: "F. Ramadhan", prod: null, qa: null },
-          notes: "Menunggu konfirmasi buyer sebelum lanjut.",
-          updatedAt: "2026-10-19",
-          docs: [
-            makeDoc(s4, "BOM", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-15"], ["V2", "Terverifikasi", "M. Hidayat", "2026-10-19", 296]], { MD: "V2", "IE-Technical": "V2" }),
-            makeDoc(s4, "Material Estimation", [], {}),
-            makeDoc(s4, "HO", [["V1", "Menunggu verifikasi", "M. Hidayat", "2026-10-20", 231]], {}),
-            makeDoc(s4, "MC", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-16", 158]], { MD: "V1", "IE-Technical": "V1" }),
-            makeDoc(s4, "RA", [], {}),
-            makeDoc(s4, "Foto style", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-17", 1420]], { "Pattern Maker": "V1" })
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        }),
-        style({
-          id: s5, brand: "Victoria's Secret", buyer: "VS", desc: "Plunge swim top",
-          group: "Swimwear", color: "Biru / Hitam", week: "WK 40",
-          dev: "In Development", prod: "Belum produksi", sample: "Menunggu konfirmasi", sampleEvidence: false, mc: 2,
-          pic: { pattern: "D. Prasetyo", mdmkt: "A. Wulandari", ie: "F. Ramadhan", prod: "S. Halim", qa: null },
-          notes: "Request sampel belum dilengkapi bukti.",
-          updatedAt: "2026-10-18",
-          docs: [
-            makeDoc(s5, "BOM", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-14", 274]], { MD: "V1", "Pattern Maker": "V1" }),
-            makeDoc(s5, "Material Estimation", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-15", 219]], { MD: "V1" }),
-            makeDoc(s5, "HO", [], {}),
-            makeDoc(s5, "MC", [["V1", "Menunggu verifikasi", "D. Prasetyo", "2026-10-17", 148]], {}),
-            makeDoc(s5, "RA", [], {}),
-            makeDoc(s5, "Foto style", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-16", 1180]], { MD: "V1" })
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        }),
-        style({
-          id: s6, brand: "SPANX", buyer: "SPANX", desc: "High-rise shaping short",
-          group: "Shapewear", color: "Very black", week: "WK 40",
-          dev: "Dev selesai", prod: "Produksi berjalan", sample: "Selesai", sampleEvidence: true, mc: 1.6,
-          pic: { pattern: "A. Wulandari", mdmkt: "F. Ramadhan", ie: "M. Hidayat", prod: "S. Halim", qa: "R. Santoso" },
-          notes: "Menunggu konfirmasi buyer sebelum lanjut.",
-          updatedAt: "2026-10-17",
-          docs: [
-            makeDoc(s6, "BOM", [["V2", "Terverifikasi", "A. Wulandari", "2026-10-16", 318]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", Production: "V2", QA: "V2" }),
-            makeDoc(s6, "Material Estimation", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-15"]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1", Production: "V1", QA: "V1" }),
-            makeDoc(s6, "HO", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-14"]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1", Production: "V1", QA: "V1" }),
-            makeDoc(s6, "MC", [["V2", "Terverifikasi", "M. Hidayat", "2026-10-16", 172]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", Production: "V2", QA: "V2" }),
-            makeDoc(s6, "RA", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-16", 208]], { MD: "V1", "Pattern Maker": "V1", "IE-Technical": "V1", Production: "V1", QA: "V1" }),
-            makeDoc(s6, "Foto style", [["V2", "Terverifikasi", "A. Wulandari", "2026-10-17", 1510]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2", Production: "V2", QA: "V2" })
-          ],
-          pubs: {
-            FRONT: [{ v: "V2", status: "Terbit", file: "FRONT_" + s6 + "_V2.pdf", by: "A. Wulandari", at: "2026-10-16" }],
-            BACK: [{ v: "V2", status: "Terbit", file: "BACK_" + s6 + "_V2.pdf", by: "A. Wulandari", at: "2026-10-17" }]
-          }
-        }),
-        style({
-          id: s7, brand: "Victoria's Secret", buyer: "VS", desc: "Cotton modal bralette",
-          group: "Women's Wear", color: "Putih / Sage", week: "WK 42",
-          dev: "In Development", prod: "Belum produksi", sample: "Diminta", sampleEvidence: true, mc: 2.9,
-          pic: { pattern: "S. Halim", mdmkt: "A. Wulandari", ie: "F. Ramadhan", prod: null, qa: null },
-          updatedAt: "2026-10-22",
-          docs: [
-            makeDoc(s7, "BOM", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-20", 264]], { MD: "V1", "Pattern Maker": "V1" }),
-            makeDoc(s7, "Material Estimation", [], {}),
-            makeDoc(s7, "HO", [], {}),
-            makeDoc(s7, "MC", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-19", 141]], { MD: "V1" }),
-            makeDoc(s7, "RA", [], {}),
-            makeDoc(s7, "Foto style", [], {})
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        }),
-        style({
-          id: s8, brand: "SPANX", buyer: "SPANX", desc: "Sculpting bodysuit",
-          group: "Shapewear", color: "Hitam", week: "WK 41",
-          dev: "In Trial", prod: "Belum produksi", sample: "Menunggu konfirmasi", sampleEvidence: true, mc: 2.2,
-          pic: { pattern: "S. Halim", mdmkt: "F. Ramadhan", ie: "M. Hidayat", prod: null, qa: null },
-          updatedAt: "2026-10-21",
-          docs: [
-            makeDoc(s8, "BOM", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-18"]], { MD: "V1" }),
-            makeDoc(s8, "Material Estimation", [["V1", "Menunggu verifikasi", "A. Wulandari", "2026-10-21", 205]], {}),
-            makeDoc(s8, "HO", [], {}),
-            makeDoc(s8, "MC", [["V1", "Terverifikasi", "M. Hidayat", "2026-10-16"]], { MD: "V1" }),
-            makeDoc(s8, "RA", [], {}),
-            makeDoc(s8, "Foto style", [["V1", "Terverifikasi", "A. Wulandari", "2026-10-19", 1290]], { MD: "V1" })
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        }),
-        style({
-          id: s9, brand: "Wacoal", buyer: "WACOAL", desc: "Minimizer everyday bra",
-          group: "Intimate Wear", color: "Beige", week: "WK 40",
-          dev: "Dev selesai", prod: "Pernah produksi", sample: "Selesai", sampleEvidence: true, mc: 1.4,
-          pic: { pattern: "R. Santoso", mdmkt: "N. Kusuma", ie: "F. Ramadhan", prod: "S. Halim", qa: "R. Santoso" },
-          updatedAt: "2026-10-16",
-          docs: [
-            makeDoc(s9, "BOM", [["V3", "Terverifikasi", "R. Santoso", "2026-10-15", 356]], { MD: "V3", "Pattern Maker": "V3", "IE-Technical": "V3", Production: "V3", QA: "V3" }),
-            makeDoc(s9, "Material Estimation", [["V2", "Terverifikasi", "R. Santoso", "2026-10-14"]], { MD: "V2", "IE-Technical": "V2", Production: "V2" }),
-            makeDoc(s9, "HO", [["V1", "Terverifikasi", "R. Santoso", "2026-10-13"]], { MD: "V1", "Pattern Maker": "V1" }),
-            makeDoc(s9, "MC", [["V2", "Terverifikasi", "R. Santoso", "2026-10-14"]], { MD: "V2", "IE-Technical": "V2" }),
-            makeDoc(s9, "RA", [["V1", "Terverifikasi", "R. Santoso", "2026-10-15"]], { MD: "V1", "IE-Technical": "V1" }),
-            makeDoc(s9, "Foto style", [["V2", "Terverifikasi", "R. Santoso", "2026-10-16", 1460]], { MD: "V2", "IE-Technical": "V2" })
-          ],
-          pubs: {
-            FRONT: [{ v: "V4", status: "Terbit", file: "FRONT_" + s9 + "_V4.pdf", by: "R. Santoso", at: "2026-10-15" }],
-            BACK: [{ v: "V3", status: "Terbit", file: "BACK_" + s9 + "_V3.pdf", by: "R. Santoso", at: "2026-10-16" }]
-          }
-        }),
-        style({
-          id: s10, brand: "Adidas", buyer: "ADIDAS", desc: "Seamless training legging",
-          group: "Sports & Activewear", color: "Charcoal", week: "WK 42",
-          dev: "In Development", prod: "Belum produksi", sample: "Diminta", sampleEvidence: true, mc: 2.3,
-          pic: { pattern: "M. Hidayat", mdmkt: "N. Kusuma", ie: "F. Ramadhan", prod: null, qa: null },
-          updatedAt: "2026-10-21",
-          docs: [
-            makeDoc(s10, "BOM", [["V1", "Menunggu verifikasi", "M. Hidayat", "2026-10-21", 288]], {}),
-            makeDoc(s10, "Material Estimation", [], {}),
-            makeDoc(s10, "HO", [], {}),
-            makeDoc(s10, "MC", [], {}),
-            makeDoc(s10, "RA", [], {}),
-            makeDoc(s10, "Foto style", [], {})
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        }),
-        style({
-          id: s11, brand: "Victoria's Secret", buyer: "VS", desc: "Push-up contour bra",
-          group: "Women's Wear", color: "Rose", week: "WK 41",
-          dev: "In Trial", prod: "Belum produksi", sample: "Dikerjakan", sampleEvidence: true, mc: 1.9,
-          pic: { pattern: "D. Prasetyo", mdmkt: "A. Wulandari", ie: "F. Ramadhan", prod: null, qa: null },
-          updatedAt: "2026-10-21",
-          docs: [
-            makeDoc(s11, "BOM", [["V2", "Terverifikasi", "D. Prasetyo", "2026-10-20", 322]], { MD: "V2", "Pattern Maker": "V2", "IE-Technical": "V2" }),
-            makeDoc(s11, "Material Estimation", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-19"]], { MD: "V1" }),
-            makeDoc(s11, "HO", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-21"]], { MD: "V1", "Pattern Maker": "V1" }),
-            makeDoc(s11, "MC", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-20"]], { MD: "V1" }),
-            makeDoc(s11, "RA", [], {}),
-            makeDoc(s11, "Foto style", [["V1", "Terverifikasi", "D. Prasetyo", "2026-10-19", 1330]], { MD: "V1" })
-          ],
-          pubs: {
-            FRONT: [{ v: "V1", status: "Draft", file: "FRONT_" + s11 + "_V1.pdf", by: "D. Prasetyo", at: "2026-10-21" }],
-            BACK: []
-          }
-        }),
-        style({
-          id: s12, brand: "Victoria's Secret", buyer: "VS", desc: "Ribbed sleep short",
-          group: "Sleepwear", color: "Off white", week: "WK 40",
-          dev: "Ditahan", prod: "Belum produksi", sample: "Dibatalkan", sampleEvidence: true, mc: 1.2,
-          pic: { pattern: "S. Halim", mdmkt: "A. Wulandari", ie: "M. Hidayat", prod: null, qa: null },
-          updatedAt: "2026-10-15",
-          docs: [
-            makeDoc(s12, "BOM", [["V1", "Terverifikasi", "S. Halim", "2026-10-12", 242]], { MD: "V1" }),
-            makeDoc(s12, "Material Estimation", [], {}),
-            makeDoc(s12, "HO", [], {}),
-            makeDoc(s12, "MC", [["V1", "Terverifikasi", "S. Halim", "2026-10-13"]], { MD: "V1" }),
-            makeDoc(s12, "RA", [], {}),
-            makeDoc(s12, "Foto style", [], {})
-          ],
-          pubs: { FRONT: [], BACK: [] }
-        })
-      ],
-      activity: [
-        { id: "act-6", at: "2026-10-24", actor: "D. Widayanto", type: "impor", title: "Impor WK 42 — VS 2026 FRONT/BACK", detail: "42 baris · 11 field diubah pada 9 style", ref: "IMP-2026-010" },
-        { id: "act-5", at: "2026-10-24", actor: "A. Wulandari", type: "alokasi", title: "Alokasi dokumen diubah", detail: "10345161 · BOM V3 · ditambahkan QA", ref: "10345161" },
-        { id: "act-4", at: "2026-10-24", actor: "D. Prasetyo", type: "publikasi", title: "BACK V2 disimpan sebagai draft", detail: "10345161 · FRONT V3 tetap terbit", ref: "10345161" },
-        { id: "act-3", at: "2026-10-23", actor: "A. Wulandari", type: "dokumen", title: "Revisi Material Estimation V3 diunggah", detail: "10345161 · menunggu verifikasi", ref: "10345161" },
-        { id: "act-2", at: "2026-10-22", actor: "D. Prasetyo", type: "dokumen", title: "HO V1 diunggah", detail: "10345161 · 248 KB · xlsx", ref: "10345161" },
-        { id: "act-1", at: "2026-10-21", actor: "R. Santoso", type: "dokumen", title: "BOM V4 diverifikasi", detail: "WC-88214 · dialokasikan ke 5 departemen", ref: "WC-88214" }
-      ],
-      batches: [
-        { id: "IMP-2026-010", at: "2026-10-24", by: "D. Widayanto", source: "VS 2026 — Running Style FRONT/BACK", rows: 42, created: 9, updated: 11, excluded: 5 },
-        { id: "IMP-2026-009", at: "2026-10-20", by: "D. Widayanto", source: "INDEX RUNNING STYLE 2026", rows: 128, created: 4, updated: 31, excluded: 3 }
-      ]
+      styles: [],
+      plannerFiles: [],
+      workspaceFiles: [],
+      styleFolders: {},
+      folderCategories: {},
+      indexImports: [],
+      masterImportBatches: [],
+      activity: [],
+      batches: []
     };
   }
 
@@ -375,7 +128,7 @@
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.version === 2 && Array.isArray(parsed.styles)) {
+        if (parsed && parsed.version === 3 && Array.isArray(parsed.styles)) {
           state = parsed;
           return state;
         }

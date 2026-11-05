@@ -13,6 +13,7 @@
 -- Buat user aplikasi (opsional):
 -- CREATE USER bra_app WITH PASSWORD 'bra_app_local';
 -- GRANT ALL PRIVILEGES ON DATABASE bra_running_style TO bra_app;
+-- GRANT CREATE ON SCHEMA public TO bra_app;
 
 -- ── app_state ──────────────────────────────────────────────
 
@@ -85,6 +86,17 @@ CREATE TABLE IF NOT EXISTS folder_files (
   PRIMARY KEY (folder_id, file_id)
 );
 
+-- ── file_blobs ──────────────────────────────────────────────
+-- Binary content berpindah dari IndexedDB browser ke PostgreSQL.
+
+CREATE TABLE IF NOT EXISTS file_blobs (
+  blob_id     VARCHAR(100) NOT NULL PRIMARY KEY,
+  content     BYTEA        NOT NULL,
+  mime_type   VARCHAR(160),
+  size_bytes  BIGINT       NOT NULL DEFAULT 0,
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
 -- ── import_batches ─────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS import_batches (
@@ -99,5 +111,6 @@ CREATE TABLE IF NOT EXISTS import_batches (
 );
 
 -- Grant akses ke user aplikasi (jalankan sebagai superuser):
+-- GRANT CREATE ON SCHEMA public TO bra_app;
 -- GRANT ALL ON ALL TABLES    IN SCHEMA public TO bra_app;
 -- GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO bra_app;

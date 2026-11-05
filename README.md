@@ -24,7 +24,8 @@ Product Group tersedia sebagai pilihan/filter: B-Bra, C-Baby Doll, C-Camisole, C
 
 ## Penyimpanan dan batas demo
 
-- Nilai Planner/Data Master serta metadata folder dan versi disimpan pada `localStorage`; isi file disimpan pada IndexedDB di browser.
+- Nilai Planner/Data Master serta metadata folder dan versi disimpan pada `localStorage`; isi file disimpan pada IndexedDB sebagai cache browser.
+- Saat Node.js API dan PostgreSQL aktif, isi file IndexedDB dimigrasikan otomatis ke tabel PostgreSQL `file_blobs` pada setiap sinkronisasi bootstrap/penyimpanan.
 - File dapat ditautkan ke beberapa folder dalam satu style tanpa membuat salinan file.
 - Penyimpanan ini hanya tersedia pada browser dan perangkat yang sama. Demo ini **belum** tersambung ke server kantor, belum membagikan data antar pengguna, dan belum menerapkan autentikasi atau izin akses server.
 - Perubahan data lama dipertahankan saat inisialisasi; field Data Master yang belum ada sebelumnya ditambahkan tanpa menghapus nilai lama. Buyer lama seperti VS, SPANX, dan WACOAL dipetakan ke nama buyer yang digunakan di menu baru.

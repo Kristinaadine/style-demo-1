@@ -54,6 +54,7 @@
   K.ui = {
     masterFilters: {},
     masterFilterOpen: "",
+    masterWeek: "",
     styleBuyer: "",
     styleSearch: "",
     styleFolder: "",
@@ -814,6 +815,36 @@
           K.toast(error.message, "error");
         }
       }
+      return;
+    }
+
+    const masterWeekClear = event.target.closest("[data-master-week-clear]");
+    if (masterWeekClear) {
+      K.ui.masterWeek = "";
+      render();
+      return;
+    }
+
+    const masterWeekFolder = event.target.closest("[data-master-week]");
+    if (masterWeekFolder) {
+      const selectedWeek = masterWeekFolder.dataset.masterWeek;
+      K.ui.masterWeek = String(K.ui.masterWeek || "").trim().toLowerCase().replace(/\s+/g, " ") === selectedWeek.trim().toLowerCase().replace(/\s+/g, " ") ? "" : selectedWeek;
+      render();
+      return;
+    }
+
+    const styleWeekClear = event.target.closest("[data-style-week-clear]");
+    if (styleWeekClear) {
+      K.ui.styleWeek = "";
+      render();
+      return;
+    }
+
+    const styleWeekFolder = event.target.closest("[data-style-week]");
+    if (styleWeekFolder) {
+      const selectedWeek = styleWeekFolder.dataset.styleWeek;
+      K.ui.styleWeek = String(K.ui.styleWeek || "").trim().toLowerCase().replace(/\s+/g, " ") === selectedWeek.trim().toLowerCase().replace(/\s+/g, " ") ? "" : selectedWeek;
+      render();
       return;
     }
 
