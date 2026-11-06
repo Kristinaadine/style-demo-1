@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daftar Style · Prototype</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="role-auth.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Archivo"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: "Archivo", system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #000; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-row antialiased text-[13px]">
+
+  <!-- SIDEBAR (Identical to Live App Navy Rail) -->
+  <aside class="w-[236px] bg-[#043168] text-[#e0ece6] flex-shrink-0 flex flex-col justify-between sticky top-0 h-screen select-none z-30">
+    <div>
+      <!-- Brand Header -->
+      <div class="min-h-[88px] px-5 py-[22px] flex items-center gap-2.5 border-b border-[#0a3a78]/40">
+        <img class="w-11 h-11 object-contain rounded bg-[#fbfbfb] p-0.5 shadow-xs" src="../assets/bra-logo.png" alt="Logo BRA">
+        <div>
+          <span class="block text-[#e8eef6] text-[12px] font-semibold tracking-[0.14em] leading-tight">RUNNING STYLE</span>
+          <span class="block text-[12px] text-[#8fa0b6] mt-0.5">Planner · Data · Berkas</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="px-3 pt-3">
+        <p class="px-2 pb-1.5 text-[11px] font-medium tracking-[0.1em] text-[#8fa0b6] uppercase">Menu utama</p>
+        
+        <!-- Inactive: Planner (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-calendar-week text-[15px] text-[#8fa0b6]"></i>
+          <span>Planner</span>
+        </div>
+
+        <!-- Inactive: Data Master (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-table text-[15px] text-[#8fa0b6]"></i>
+          <span>Data Master</span>
+        </div>
+
+        <!-- Active: Daftar Style (Green button) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[#00754a] text-white font-medium mb-1 shadow-xs">
+          <i class="ti ti-folders text-[15px]"></i>
+          <span>Daftar Style</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="p-5 border-t border-[#22374f] text-[12px] text-[#8fa0b6] leading-relaxed">
+      <strong class="block text-[#cdd8e6] font-medium">Running Style</strong>
+      <span>Kelola update dan berkas style.</span>
+      <div class="pt-3 mt-2 border-t border-[#193250] flex flex-col gap-1.5">
+        <a href="index.html" class="text-[11px] text-[#cdd8e6] hover:text-white underline flex items-center gap-1">
+          <i class="ti ti-layout-dashboard text-xs"></i> Ke Portal Prototipe
+        </a>
+        <a href="../index.html#/daftar-style" class="text-[11px] text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1">
+          <i class="ti ti-arrow-back-up text-xs"></i> Buka Portal Live Asli
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="flex-1 flex flex-col min-w-0 bg-[#f0f0f0]">
+    
+    <!-- Topbar -->
+    <header class="h-16 bg-[#fbfbfb] border-b border-[#caced0] sticky top-0 z-20 flex items-center justify-between px-8">
+      <div class="flex items-center gap-2 text-[14px] font-semibold text-black">
+        <span>Daftar Style</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="dsRoleSelector" class="max-w-xs"></div>
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#00754a] hover:bg-[#00603c] text-white shadow-xs transition">
+          <i class="ti ti-palette"></i>
+          <span>Portal Prototype UI (Tailwind)</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="p-8 max-w-[1400px] w-full mx-auto space-y-6">
+      
+      <!-- Page Heading & Count -->
+      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+        <div>
+          <h1 class="text-[22px] font-bold text-black tracking-tight">Daftar Style</h1>
+          <p class="text-[12px] text-[#878787] mt-1">Data Style dapat diisi manual dan diedit langsung pada tabel. Klik nama style untuk membuka folder.</p>
+        </div>
+        <span id="styleTotalCount" class="text-[12px] text-[#878787] mono">188 style</span>
+      </div>
+
+      <!-- FILTER & SEARCH TOOLBAR (Matching Image 3) -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex-1 relative max-w-xl">
+          <i class="ti ti-search absolute left-3 top-2.5 text-[#878787]"></i>
+          <input id="styleSearchInput" placeholder="Cari buyer, article, atau nama style" class="w-full pl-9 pr-3.5 py-2 text-[13px] rounded-[8px] border border-[#caced0] bg-white focus:outline-none focus:border-[#00754a]">
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select id="buyerFilterSelect" class="py-2 px-3 text-[13px] rounded-[8px] border border-[#caced0] bg-white text-black focus:outline-none focus:border-[#00754a]">
+            <option value="all">Semua Buyer</option>
+            <option value="AME">AME</option>
+            <option value="VS">VS/Victoria's Secret</option>
+            <option value="SPANX">SPX/Spanx</option>
+            <option value="WACOAL">WAC US/Wacoal</option>
+            <option value="ADIDAS">ADIDAS</option>
+          </select>
+          <div id="dsActionButtons"></div>
+        </div>
+      </div>
+
+      <!-- CARD 1: Folder Week / WK (Horizontal Carousel matching Image 3) -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+        <div class="mb-4">
+          <h2 class="text-[15px] font-bold text-black">Folder Week / WK</h2>
+          <p class="text-[12px] text-[#878787] mt-0.5">Menampilkan folder berdasarkan minggu dari file yang sudah diunggah di Planner.</p>
+        </div>
+
+        <!-- Carousel Row -->
+        <div class="overflow-x-auto pb-2 flex items-center gap-3" id="styleWeekContainer">
+          <!-- Populated from storage/data -->
+        </div>
+      </section>
+
+      <!-- CARD 2: Style Table (Exact layout from Image 3) -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse bg-white text-[13px]">
+            <thead>
+              <tr class="bg-[#fbfbfb] border-b border-[#caced0] text-[11px] font-bold uppercase tracking-wider text-[#878787]">
+                <th class="py-3 px-4 w-28">PREVIEW FOTO</th>
+                <th class="py-3 px-4">ARTICLE / STYLE</th>
+                <th class="py-3 px-4">NAMA STYLE</th>
+                <th class="py-3 px-4">BUYER</th>
+                <th class="py-3 px-4">PIC</th>
+                <th class="py-3 px-4">SMV</th>
+              </tr>
+            </thead>
+            <tbody id="styleTableBody" class="divide-y divide-[#caced0]/60">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // --- Role-Based Access Control ---
+    const currentRole = RoleAuth.getCurrentRole();
+    if (!currentRole) {
+      location.href = "index.html";
+    }
+    if (!RoleAuth.canAccessPage(currentRole, "daftar-style")) {
+      document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-[#f0f0f0] p-8">
+          <div class="bg-white rounded-[10px] border border-[#caced0] p-8 shadow-xs max-w-md w-full text-center">
+            <div class="w-12 h-12 rounded-full bg-[#fdebe5] text-[#b64a20] flex items-center justify-center mx-auto mb-4">
+              <i class="ti ti-lock text-xl"></i>
+            </div>
+            <h2 class="text-[16px] font-bold text-black mb-2">Halaman Tidak Dapat Diakses</h2>
+            <p class="text-[13px] text-[#878787] mb-6">
+              Role <strong>${RoleAuth.ROLES[currentRole].label}</strong> tidak memiliki akses ke halaman Daftar Style.
+            </p>
+            <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[#043168] hover:bg-[#0a3a78] text-white font-semibold text-xs shadow-xs transition">
+              <i class="ti ti-arrow-left"></i> Kembali ke Pilihan Role
+            </a>
+          </div>
+        </div>
+      `;
+      throw new Error("Access denied");
+    }
+
+    const dsPerm = RoleAuth.getPermission(currentRole, "daftar-style");
+
+    // Render action buttons conditionally
+    const actionContainer = document.getElementById("dsActionButtons");
+    let hasAnyAction = false;
+    let buttonsHtml = '';
+
+    if (dsPerm.uploadIndex) {
+      buttonsHtml += `<button type="button" onclick="alert('Upload Index')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-white border border-[#caced0] text-black font-medium text-[12px] hover:bg-[#f8f9fa] shadow-2xs"><i class="ti ti-upload"></i> Upload Index</button>`;
+      hasAnyAction = true;
+    }
+    if (dsPerm.addStyle) {
+      buttonsHtml += `<button type="button" onclick="alert('Tambah Style Baru')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#00754a] hover:bg-[#00603c] text-white font-semibold text-[12px] shadow-xs"><i class="ti ti-plus"></i> Tambah Style <i class="ti ti-chevron-down text-xs"></i></button>`;
+      hasAnyAction = true;
+    }
+    if (!hasAnyAction) {
+      buttonsHtml = `<span class="text-[11px] text-[#878787] font-medium">Mode ${dsPerm.uploadFile ? "upload foto/file per style" : "hanya-baca"}</span>`;
+    }
+    actionContainer.innerHTML = buttonsHtml;
+
+    function getStoredStyles() {
+      try {
+        const raw = localStorage.getItem("bra-running-style-v3") || localStorage.getItem("bra-running-style-v2");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.styles) && parsed.styles.length > 0) {
+            return parsed.styles;
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    // Default styles matching Image 3 with photo previews
+    const fallbackList = [
+      { id: "#1808", name: "Nama style", buyer: "AME", pic: "PIC", smv: "1", photo: "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=100&q=80", week: "WK 8" },
+      { id: "#1809", name: "Nama style", buyer: "AME", pic: "PIC", smv: "1", photo: "https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?w=100&q=80", week: "WK 8" },
+      { id: "#1810", name: "Nama style", buyer: "AME", pic: "PIC", smv: "1", photo: null, week: "WK 8" },
+      { id: "#1811", name: "Nama style", buyer: "AME", pic: "PIC", smv: "1", photo: null, week: "WK 8" },
+      { id: "10345161", name: "Wireless Lightly Lined Bra", buyer: "VS", pic: "A. Wulandari", smv: "1.8", photo: "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=100&q=80", week: "WK 42" },
+      { id: "10767R", name: "Seamless shaping brief", buyer: "SPANX", pic: "F. Ramadhan", smv: "2.2", photo: null, week: "WK 42" },
+      { id: "WC-88214", name: "Everyday comfort bra", buyer: "WACOAL", pic: "N. Kusuma", smv: "2.4", photo: null, week: "WK 41" }
+    ];
+
+    const rawList = getStoredStyles();
+    let styleItems = rawList ? rawList.map(s => ({
+      id: s.id || "-",
+      name: s.desc || "Nama style",
+      buyer: s.buyer || "AME",
+      pic: s.picMaster || (s.pic ? s.pic.mdmkt : "PIC") || "PIC",
+      smv: s.smv || "1",
+      photo: s.photoUploaded ? "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=100&q=80" : null,
+      week: s.week || "WK 8"
+    })) : fallbackList;
+
+    const weekCards = ["WK 7", "WK 11-14", "WK 10", "WK 9", "WK 8"];
+    let selectedWk = null;
+
+    function renderWeekCards() {
+      const c = document.getElementById("styleWeekContainer");
+      c.innerHTML = weekCards.map(w => {
+        const isSel = selectedWk === w;
+        return `
+          <button type="button" onclick="filterWk('${w}')" class="flex-shrink-0 text-left p-3.5 rounded-[8px] border transition min-w-[200px] ${
+            isSel ? 'bg-[#e9f3ee] border-[#00754a]' : 'bg-[#fbfbfb] hover:bg-[#f0f0f0] border-[#caced0]'
+          }">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="ti ti-folder text-[17px] text-[#878787]"></i>
+              <strong class="font-bold text-black text-[13px] mono">${w}</strong>
+            </div>
+            <div class="text-[11px] text-[#878787]">05 Nov 2026 · file Planner</div>
+          </button>
+        `;
+      }).join("") + `
+        <button type="button" onclick="filterWk(null)" class="flex-shrink-0 text-left p-3.5 rounded-[8px] border ${
+          !selectedWk ? 'bg-[#e9f3ee] border-[#00754a]' : 'bg-[#fbfbfb] border-[#caced0]'
+        }">
+          <div class="font-bold text-[12px] text-black">Tampilkan Semua</div>
+          <div class="text-[11px] text-[#878787]">Semua Folder</div>
+        </button>
+      `;
+    }
+
+    function filterWk(w) {
+      selectedWk = selectedWk === w ? null : w;
+      renderWeekCards();
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("styleTableBody");
+      const search = (document.getElementById("styleSearchInput").value || "").toLowerCase().trim();
+      const buyer = document.getElementById("buyerFilterSelect").value;
+
+      const filtered = styleItems.filter(s => {
+        const matchWk = !selectedWk || s.week === selectedWk;
+        const matchBuyer = buyer === "all" || s.buyer.includes(buyer);
+        const matchSearch = !search || s.id.toLowerCase().includes(search) || s.name.toLowerCase().includes(search) || s.buyer.toLowerCase().includes(search);
+        return matchWk && matchBuyer && matchSearch;
+      });
+
+      document.getElementById("styleTotalCount").textContent = `${filtered.length} style`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-[#878787]">Tidak ada data style ditemukan.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        return `
+          <tr class="hover:bg-[#fbfbfb] transition">
+            <!-- PREVIEW FOTO -->
+            <td class="py-3 px-4 align-middle">
+              ${s.photo ? `
+                <div class="w-12 h-12 rounded border border-[#caced0] overflow-hidden bg-white flex flex-col items-center justify-center p-0.5 shadow-2xs">
+                  <img src="${s.photo}" class="w-full h-full object-cover rounded mb-0.5">
+                  ${(dsPerm.download || dsPerm.preview) ? `
+                  <button type="button" onclick="alert('Unduh: ' + '${s.id.replace(/'/g, "\\'")}')" class="w-full h-4 flex items-center justify-center text-[#878787] hover:text-[#00754a] text-[9px]">
+                    <i class="ti ti-download"></i>
+                  </button>
+                  ` : ''}
+                </div>
+              ` : `
+                ${dsPerm.uploadFile ? `
+                <div class="w-12 h-12 rounded border border-dashed border-[#00754a] bg-[#e9f3ee] flex flex-col items-center justify-center text-[#00754a] text-[10px] shadow-2xs">
+                  <i class="ti ti-photo-plus text-base mb-0.5"></i>
+                  <span>Upload</span>
+                </div>
+                ` : `
+                <div class="w-12 h-12 rounded border border-dashed border-[#caced0] bg-[#fbfbfb] flex flex-col items-center justify-center text-[#878787] text-[10px]">
+                  <i class="ti ti-photo text-base"></i>
+                  <span>Upload</span>
+                </div>
+                `}
+              `}
+            </td>
+
+            <!-- ARTICLE / STYLE -->
+            <td class="py-3 px-4 align-middle font-bold mono">
+              <a href="javascript:void(0)" onclick="alert('Buka folder style: ' + '${s.id.replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1.5 text-black hover:text-[#00754a] hover:underline">
+                <i class="ti ti-folder text-base text-[#878787]"></i>
+                <span>${s.id}</span>
+              </a>
+            </td>
+
+            <!-- NAMA STYLE -->
+            <td class="py-3 px-4 align-middle text-black">${s.name}</td>
+
+            <!-- BUYER -->
+            <td class="py-3 px-4 align-middle font-medium text-black">${s.buyer}</td>
+
+            <!-- PIC -->
+            <td class="py-3 px-4 align-middle text-black">${s.pic}</td>
+
+            <!-- SMV -->
+            <td class="py-3 px-4 align-middle mono text-black">${s.smv}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("styleSearchInput").addEventListener("input", renderTable);
+    document.getElementById("buyerFilterSelect").addEventListener("change", renderTable);
+
+    renderWeekCards();
+    renderTable();
+
+    // Initialize role selector
+    RoleAuth.renderRoleSelector("dsRoleSelector");
+  </script>
+</body>
+</html>

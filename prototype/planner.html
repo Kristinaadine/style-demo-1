@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planner mingguan · Prototype</title>
+  
+  <!-- Fonts & Icons matching Live Portal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="role-auth.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Archivo"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            rail: '#043168',
+            railHover: '#0a3d7d',
+            activeGreen: '#00754a',
+            activeGreenHover: '#00603c',
+            surfaceBg: '#f0f0f0',
+            hair: '#caced0',
+            hairSoft: '#e0e5e4',
+            ink: '#000000',
+            inkMuted: '#878787',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: "Archivo", system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #000; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-row antialiased text-[13px]">
+
+  <!-- SIDEBAR (Identical to Live App Navy Rail) -->
+  <aside class="w-[236px] bg-[#043168] text-[#e0ece6] flex-shrink-0 flex flex-col justify-between sticky top-0 h-screen select-none z-30">
+    <div>
+      <!-- Brand Header -->
+      <div class="min-h-[88px] px-5 py-[22px] flex items-center gap-2.5 border-b border-[#0a3a78]/40">
+        <img class="w-11 h-11 object-contain rounded bg-[#fbfbfb] p-0.5 shadow-xs" src="../assets/bra-logo.png" alt="Logo BRA">
+        <div>
+          <span class="block text-[#e8eef6] text-[12px] font-semibold tracking-[0.14em] leading-tight">RUNNING STYLE</span>
+          <span class="block text-[12px] text-[#8fa0b6] mt-0.5">Planner · Data · Berkas</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="px-3 pt-3">
+        <p class="px-2 pb-1.5 text-[11px] font-medium tracking-[0.1em] text-[#8fa0b6] uppercase">Menu utama</p>
+        
+        <!-- Active: Planner (Green button) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[#00754a] text-white font-medium mb-1 shadow-xs">
+          <i class="ti ti-calendar-week text-[15px]"></i>
+          <span>Planner</span>
+        </div>
+
+        <!-- Inactive: Data Master (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-table text-[15px] text-[#8fa0b6]"></i>
+          <span>Data Master</span>
+        </div>
+
+        <!-- Inactive: Daftar Style (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-folders text-[15px] text-[#8fa0b6]"></i>
+          <span>Daftar Style</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="p-5 border-t border-[#22374f] text-[12px] text-[#8fa0b6] leading-relaxed">
+      <strong class="block text-[#cdd8e6] font-medium">Running Style</strong>
+      <span>Kelola update dan berkas style.</span>
+      <div class="pt-3 mt-2 border-t border-[#193250] flex flex-col gap-1.5">
+        <a href="index.html" class="text-[11px] text-[#cdd8e6] hover:text-white underline flex items-center gap-1">
+          <i class="ti ti-layout-dashboard text-xs"></i> Ke Portal Prototipe
+        </a>
+        <a href="../index.html" class="text-[11px] text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1">
+          <i class="ti ti-arrow-back-up text-xs"></i> Buka Portal Live Asli
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="flex-1 flex flex-col min-w-0 bg-[#f0f0f0]">
+    
+    <!-- Topbar (White bar matching live portal) -->
+    <header class="h-16 bg-[#fbfbfb] border-b border-[#caced0] sticky top-0 z-20 flex items-center justify-between px-8">
+      <div class="flex items-center gap-2 text-[14px] font-semibold text-black">
+        <span>Planner mingguan</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="plannerRoleSelector" class="max-w-xs"></div>
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#00754a] hover:bg-[#00603c] text-white shadow-xs transition">
+          <i class="ti ti-palette"></i>
+          <span>Portal Prototype UI (Tailwind)</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="p-8 max-w-[1400px] w-full mx-auto space-y-6">
+      
+      <!-- Page Heading -->
+      <h1 class="text-[22px] font-bold text-black tracking-tight">Planner mingguan</h1>
+
+      <!-- CARD 1: Tambah file Planner -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+        <div class="mb-5 pb-3 border-b border-[#f0f0f0]">
+          <h2 class="text-[15px] font-bold text-black">Tambah file Planner</h2>
+          <p class="text-[12px] text-[#878787] mt-0.5">File asli disimpan di penyimpanan browser pada perangkat ini.</p>
+        </div>
+        <div id="plannerUploadFormContainer"></div>
+      </section>
+
+      <!-- CARD 2: File Planner yang diterima -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+        <div class="mb-4">
+          <h2 class="text-[15px] font-bold text-black">File Planner yang diterima</h2>
+          <p id="plannerCountText" class="text-[12px] text-[#878787] mt-0.5">5 file tersimpan</p>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto border border-[#caced0] rounded-[8px]">
+          <table class="w-full text-left border-collapse bg-white">
+            <thead>
+              <tr class="bg-[#fbfbfb] border-b border-[#caced0] text-[11px] font-bold uppercase tracking-wider text-[#878787]">
+                <th class="py-3 px-4">Minggu</th>
+                <th class="py-3 px-4">Nama File</th>
+                <th class="py-3 px-4">Diterima</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="plannerTableBody" class="divide-y divide-[#caced0]/60 text-[13px]">
+              <!-- Dynamically populated from localStorage -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // --- Role-Based Access Control ---
+    const currentRole = RoleAuth.getCurrentRole();
+    if (!currentRole) {
+      location.href = "index.html";
+    }
+    if (!RoleAuth.canAccessPage(currentRole, "planner")) {
+      document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-[#f0f0f0] p-8">
+          <div class="bg-white rounded-[10px] border border-[#caced0] p-8 shadow-xs max-w-md w-full text-center">
+            <div class="w-12 h-12 rounded-full bg-[#fdebe5] text-[#b64a20] flex items-center justify-center mx-auto mb-4">
+              <i class="ti ti-lock text-xl"></i>
+            </div>
+            <h2 class="text-[16px] font-bold text-black mb-2">Halaman Tidak Dapat Diakses</h2>
+            <p class="text-[13px] text-[#878787] mb-6">
+              Role <strong>${RoleAuth.ROLES[currentRole].label}</strong> tidak memiliki akses ke halaman Planner.
+            </p>
+            <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[#043168] hover:bg-[#0a3a78] text-white font-semibold text-xs shadow-xs transition">
+              <i class="ti ti-arrow-left"></i> Kembali ke Pilihan Role
+            </a>
+          </div>
+        </div>
+      `;
+      throw new Error("Access denied");
+    }
+
+    const perm = RoleAuth.getPermission(currentRole, "planner");
+
+    // Render upload form conditionally
+    const uploadContainer = document.getElementById("plannerUploadFormContainer");
+    if (perm.upload) {
+      uploadContainer.innerHTML = `
+        <form id="addPlannerForm" class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            
+            <!-- Left: Minggu Diterima -->
+            <div>
+              <label for="inputWeek" class="block text-[11px] font-bold tracking-wider text-[#454845] uppercase mb-1.5">
+                Minggu diterima <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                id="inputWeek" 
+                type="text" 
+                required 
+                placeholder="contoh : WK 11-14" 
+                class="w-full px-3.5 py-2.5 rounded-[8px] border border-[#caced0] text-[13px] text-black placeholder:text-[#878787] focus:outline-none focus:border-[#00754a] transition bg-white"
+              >
+            </div>
+
+            <!-- Right: File New Style Updated -->
+            <div>
+              <label for="inputFile" class="block text-[11px] font-bold tracking-wider text-[#454845] uppercase mb-1.5">
+                File New Style Updated <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                id="inputFile" 
+                type="file" 
+                accept=".xlsx,.xls,.csv" 
+                required 
+                class="w-full px-3 py-2 rounded-[8px] border border-[#caced0] text-[13px] text-black bg-white file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-[#caced0] file:bg-[#f0f0f0] file:text-[12px] file:font-medium hover:file:bg-[#e0e5e4] cursor-pointer"
+              >
+              <p class="text-[12px] text-[#878787] mt-1.5">Format: .xlsx, .xls, atau .csv. Maksimal 1 GB per berkas.</p>
+            </div>
+
+          </div>
+
+          <!-- Bottom Button -->
+          <div class="flex justify-start pt-2">
+            <button 
+              type="submit" 
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#00754a] hover:bg-[#00603c] text-white font-semibold text-[13px] shadow-xs transition"
+            >
+              <i class="ti ti-upload"></i>
+              <span>Simpan file Planner</span>
+            </button>
+          </div>
+        </form>
+      `;
+    } else {
+      uploadContainer.innerHTML = `
+        <div class="bg-[#fdebe5] border border-[#b64a20] rounded-[8px] p-4 text-center">
+          <i class="ti ti-lock text-[#b64a20] text-[20px] mb-2 block"></i>
+          <p class="text-[13px] text-[#b64a20] font-medium">Anda tidak memiliki izin untuk mengunggah file Planner.</p>
+        </div>
+      `;
+    }
+
+    function getStoredFiles() {
+      try {
+        const raw = localStorage.getItem("bra-running-style-v3") || localStorage.getItem("bra-running-style-v2");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.plannerFiles) && parsed.plannerFiles.length > 0) {
+            const importedNames = (parsed.indexImports || []).map(imp => (imp.fileName || "").toLowerCase());
+            return parsed.plannerFiles.map(rec => ({
+              id: rec.blobId || rec.id || ("f-" + Math.random()),
+              week: rec.week || "—",
+              name: rec.name,
+              displayName: rec.displayName || rec.name,
+              size: rec.size || 0,
+              receivedAt: rec.receivedAt || "2026-11-05T00:00:00.000Z",
+              imported: importedNames.includes((rec.name || "").toLowerCase()),
+              type: rec.type
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn("Storage error", e);
+      }
+      return null;
+    }
+
+    const fallbackData = [
+      { id: "1", week: "WK 7", name: "WK 7 - WK 7 New Style Received_Updated as of 19 Feb 2026.xlsx", size: 21076377, receivedAt: "2026-11-05", imported: true },
+      { id: "2", week: "WK 11-14", name: "WK 11-14 - WK 11-14 New Style Received_Updated as of 02 Apr 2026.xlsx", size: 16148070, receivedAt: "2026-11-05", imported: true },
+      { id: "3", week: "WK 10", name: "WK 10 - WK 10 New Style Received_Updated as of 10 Mar 2026.xlsx", size: 19084083, receivedAt: "2026-11-05", imported: true },
+      { id: "4", week: "WK 9", name: "WK 9 - WK 9 New Style Received_Updated as of 24 Feb 2026.xlsx", size: 17406361, receivedAt: "2026-11-05", imported: true },
+      { id: "5", week: "WK 8", name: "WK 8 - WK 8 New Style Received_Updated as of 20 Feb 2026.xlsx", size: 18140364, receivedAt: "2026-11-05", imported: true }
+    ];
+
+    const stored = getStoredFiles();
+    let files = (stored && stored.length > 0) ? stored : fallbackData;
+
+    function formatBytes(bytes) {
+      if (!bytes) return "0 MB";
+      return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    function formatDate(val) {
+      if (!val) return "05 Nov 2026";
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return String(val).slice(0, 10);
+      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+      const day = String(d.getDate()).padStart(2, "0");
+      return day + " " + months[d.getMonth()] + " " + d.getFullYear();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("plannerTableBody");
+      document.getElementById("plannerCountText").textContent = files.length + " file tersimpan";
+
+      if (files.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 px-4 text-center text-[#878787]">Belum ada file Planner. Unggah file di bagian atas untuk memulai.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = files.map(file => {
+        return `
+          <tr class="hover:bg-[#fbfbfb] transition">
+            <!-- MINGGU -->
+            <td class="py-3 px-4 font-bold mono text-black align-middle whitespace-nowrap">
+              ${file.week}
+            </td>
+
+            <!-- NAMA FILE -->
+            <td class="py-3 px-4 align-middle">
+              <div class="font-bold text-black text-[13px]">${file.name}</div>
+              <div class="text-[12px] text-[#878787] mono mt-0.5">${formatBytes(file.size)}</div>
+            </td>
+
+            <!-- DITERIMA -->
+            <td class="py-3 px-4 align-middle text-[#000] whitespace-nowrap">
+              ${formatDate(file.receivedAt)}
+            </td>
+
+            <!-- STATUS -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+              ${file.imported ? `
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] font-semibold bg-[#e9f3ee] text-[#00754a]">
+                  <i class="ti ti-check text-xs"></i> Sudah diimport
+                </span>
+              ` : `
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] font-semibold bg-[#fdebe5] text-[#b64a20]">
+                  Belum diimport
+                </span>
+              `}
+            </td>
+
+            <!-- AKSI -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+              <div class="flex items-center gap-1.5">
+                ${perm.download ? `
+                <button type="button" onclick="alert('Mengunduh ' + '${file.name.replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-white hover:bg-[#f0f0f0] border border-[#caced0] text-black text-[12px]">
+                  <i class="ti ti-download"></i> Unduh
+                </button>
+                ` : ''}
+                ${perm.rename ? `
+                <button type="button" onclick="const n = prompt('Ganti nama file:', '${file.name.replace(/'/g, "\\'")}'); if (n) { file.name = n; renderTable(); }" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-white hover:bg-[#f0f0f0] border border-[#caced0] text-black text-[12px]">
+                  <i class="ti ti-pencil"></i> Rename
+                </button>
+                ` : ''}
+                ${perm.import ? `
+                <button type="button" onclick="file.imported = true; renderTable(); alert('File berhasil diimport ke Data Master!');" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-white hover:bg-[#f0f0f0] border border-[#caced0] text-black text-[12px]">
+                  <i class="ti ti-database-import"></i> Import ke Data Master
+                </button>
+                ` : ''}
+                ${perm.delete ? `
+                <button type="button" onclick="if(confirm('Hapus file ini?')) { files = files.filter(f => f.id !== '${file.id}'); renderTable(); }" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-white hover:bg-[#fff0f0] border border-[#caced0] text-[#a33a3a] text-[12px]">
+                  <i class="ti ti-trash"></i> Hapus
+                </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("addPlannerForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const week = document.getElementById("inputWeek").value.trim();
+      const fileInput = document.getElementById("inputFile");
+      const file = fileInput.files[0];
+
+      if (!file) return;
+
+      const newRec = {
+        id: "f-" + Date.now(),
+        week: week.toUpperCase(),
+        name: file.name,
+        size: file.size,
+        receivedAt: new Date().toISOString(),
+        imported: false
+      };
+
+      files.unshift(newRec);
+      renderTable();
+      document.getElementById("addPlannerForm").reset();
+      alert("File Planner " + newRec.name + " berhasil disimpan!");
+    });
+
+    renderTable();
+
+    // Initialize role selector
+    RoleAuth.renderRoleSelector("plannerRoleSelector");
+  </script>
+</body>
+</html>

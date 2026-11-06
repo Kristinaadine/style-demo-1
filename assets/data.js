@@ -124,18 +124,64 @@
   let state = null;
 
   function load() {
+    let currentV3 = null;
     try {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && parsed.version === 3 && Array.isArray(parsed.styles)) {
-          state = parsed;
-          return state;
+          const hasV3Data = parsed.styles.length > 0 ||
+            (Array.isArray(parsed.plannerFiles) && parsed.plannerFiles.length > 0) ||
+            (Array.isArray(parsed.workspaceFiles) && parsed.workspaceFiles.length > 0);
+          if (hasV3Data) {
+            state = parsed;
+            return state;
+          }
+          currentV3 = parsed;
         }
       }
     } catch (err) {
-      console.warn("State tidak dapat dibaca, memakai data awal.", err);
+      console.warn("State v3 tidak dapat dibaca, memeriksa data versi sebelumnya.", err);
     }
+
+    // Coba migrasi otomatis jika ada data yang tersimpan pada versi sebelumnya (v2, v1, atau legacy)
+    const LEGACY_KEYS = ["bra-running-style-v2", "bra-running-style-v1", "bra-running-style"];
+    for (let i = 0; i < LEGACY_KEYS.length; i++) {
+      try {
+        const legacyRaw = localStorage.getItem(LEGACY_KEYS[i]);
+        if (!legacyRaw) continue;
+        const legacyParsed = JSON.parse(legacyRaw);
+        if (legacyParsed && (
+          (Array.isArray(legacyParsed.styles) && legacyParsed.styles.length > 0) ||
+          (Array.isArray(legacyParsed.plannerFiles) && legacyParsed.plannerFiles.length > 0) ||
+          (Array.isArray(legacyParsed.workspaceFiles) && legacyParsed.workspaceFiles.length > 0)
+        )) {
+          legacyParsed.version = 3;
+          if (!Array.isArray(legacyParsed.styles)) legacyParsed.styles = [];
+          if (!Array.isArray(legacyParsed.plannerFiles)) legacyParsed.plannerFiles = [];
+          if (!Array.isArray(legacyParsed.workspaceFiles)) legacyParsed.workspaceFiles = [];
+          if (!legacyParsed.styleFolders || typeof legacyParsed.styleFolders !== "object") legacyParsed.styleFolders = {};
+          if (!legacyParsed.folderCategories || typeof legacyParsed.folderCategories !== "object") legacyParsed.folderCategories = {};
+          if (!Array.isArray(legacyParsed.indexImports)) legacyParsed.indexImports = [];
+          if (!Array.isArray(legacyParsed.masterImportBatches)) legacyParsed.masterImportBatches = [];
+          if (!Array.isArray(legacyParsed.activity)) legacyParsed.activity = [];
+          if (!Array.isArray(legacyParsed.batches)) legacyParsed.batches = [];
+
+          state = legacyParsed;
+          save();
+          console.info("Berhasil memulihkan dan memigrasikan data dari " + LEGACY_KEYS[i] + " ke " + STORE_KEY);
+          return state;
+        }
+      } catch (legacyErr) {
+        console.warn("Gagal membaca legacy key " + LEGACY_KEYS[i], legacyErr);
+      }
+    }
+
+    if (currentV3) {
+      state = currentV3;
+      return state;
+    }
+
     state = seed();
     save();
     return state;

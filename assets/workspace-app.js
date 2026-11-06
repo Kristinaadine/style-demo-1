@@ -197,7 +197,12 @@
         '<i class="ti ti-menu"></i></button>' +
       backButton +
       '<div class="crumb"><span class="crumb__current">' + K.esc(navItem.title) +
-        "</span></div>";
+        "</span></div>" +
+      '<div style="margin-left:auto; display:flex; align-items:center; gap:8px;">' +
+        '<a href="prototype/index.html" style="display:inline-flex; align-items:center; gap:6px; background:#047857; color:#ffffff; padding:6px 14px; border-radius:9999px; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 2px 4px rgba(4,120,87,0.25); transition:opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1">' +
+          '<i class="ti ti-palette"></i> <span>Portal Prototype UI (Tailwind)</span>' +
+        '</a>' +
+      '</div>';
 
     view.innerHTML = K.views[info.route](info);
     hydrateStyleThumbnails();

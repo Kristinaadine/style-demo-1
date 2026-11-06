@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal Prototype UI · BRA Running Style</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body { font-family: "Archivo", system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #000; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  </style>
+  <script src="role-auth.js"></script>
+</head>
+<body class="min-h-screen flex flex-col antialiased text-[13px] bg-[#f0f0f0]">
+
+  <!-- Topbar Header matching Live Navy theme -->
+  <header class="bg-[#043168] text-white px-8 py-5 border-b border-[#0a3a78] shadow-xs">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <img class="w-11 h-11 object-contain rounded bg-[#fbfbfb] p-0.5 shadow-xs" src="../assets/bra-logo.png" alt="Logo BRA">
+        <div>
+          <span class="block text-[#e8eef6] text-[12px] font-semibold tracking-[0.14em]">RUNNING STYLE</span>
+          <h1 class="text-[18px] font-bold text-white tracking-tight">Portal Prototipe UI (Per Halaman Mandiri)</h1>
+        </div>
+      </div>
+      <div>
+        <a href="../index.html" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#00754a] hover:bg-[#00603c] text-white font-semibold text-xs shadow-xs transition">
+          <i class="ti ti-arrow-back-up"></i>
+          <span>Buka Aplikasi Asli (Live)</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl w-full mx-auto p-8 space-y-6 flex-1">
+
+    <!-- Role Selector -->
+    <div class="bg-white rounded-[10px] border border-[#caced0] p-5 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-[#043168] text-white flex items-center justify-center text-xl flex-shrink-0">
+          <i class="ti ti-user"></i>
+        </div>
+        <div>
+          <h2 class="text-[14px] font-bold text-black">Pilih Aktor / Role Pengguna</h2>
+          <p class="text-[12px] text-[#878787] mt-0.5">
+            Pilih role yang akan diuji. Pilihan akan disimpan dan berlaku untuk semua halaman prototype.
+          </p>
+        </div>
+      </div>
+      <div id="roleSelector" class="mt-4 max-w-xs"></div>
+    </div>
+
+    <script>
+      window.RoleAuth.renderRoleSelector("roleSelector");
+    </script>
+    
+    <div class="bg-white rounded-[10px] border border-[#caced0] p-5 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-[#e9f3ee] text-[#00754a] flex items-center justify-center text-xl flex-shrink-0">
+          <i class="ti ti-device-desktop"></i>
+        </div>
+        <div>
+          <h2 class="text-[14px] font-bold text-black">Tampilan Antarmuka Identik dengan Aplikasi Live</h2>
+          <p class="text-[12px] text-[#878787] mt-0.5">
+            Masing-masing prototipe di bawah ini telah disesuaikan agar <strong>100% identik dengan tampilan portal aslinya</strong> (sidebar navy, form, tabel, serta data 5 file riwayat browser Anda), dengan navigasi menu halaman lain yang dinonaktifkan (hanya berupa teks saja tanpa tautan).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 Prototype Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 1: Planner Mingguan -->
+      <div class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs flex flex-col justify-between hover:border-[#00754a] transition">
+        <div>
+          <div class="w-10 h-10 rounded-lg bg-[#e9f3ee] text-[#00754a] flex items-center justify-center text-xl mb-3">
+            <i class="ti ti-calendar-week"></i>
+          </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#00754a]">Halaman 1</span>
+          <h3 class="text-[16px] font-bold text-black mt-1">Planner Mingguan</h3>
+          <p class="text-[12px] text-[#878787] mt-2 leading-relaxed">
+            Form Tambah File Planner (Minggu diterima & input berkas) serta tabel File Planner yang diterima beserta aksi Preview, Unduh, Rename, dan Import.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#f0f0f0]">
+          <a href="planner.html" class="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-[6px] bg-[#00754a] hover:bg-[#00603c] text-white font-semibold text-xs shadow-xs transition">
+            <span>Buka Prototipe Planner</span>
+            <i class="ti ti-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Data Master -->
+      <div class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs flex flex-col justify-between hover:border-[#00754a] transition">
+        <div>
+          <div class="w-10 h-10 rounded-lg bg-[#f0f0f0] text-[#043168] flex items-center justify-center text-xl mb-3">
+            <i class="ti ti-table"></i>
+          </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#878787]">Halaman 2</span>
+          <h3 class="text-[16px] font-bold text-black mt-1">Data Master</h3>
+          <p class="text-[12px] text-[#878787] mt-2 leading-relaxed">
+            Index running style, kartu horizontal Folder Week (WK 7, WK 11-14, dll.), tombol aksi ekspor/impor, serta status template photo dan foto fitting.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#f0f0f0]">
+          <a href="data-master.html" class="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-[6px] bg-[#043168] hover:bg-[#0a3a78] text-white font-semibold text-xs shadow-xs transition">
+            <span>Buka Prototipe Data Master</span>
+            <i class="ti ti-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: Daftar Style & Berkas -->
+      <div class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs flex flex-col justify-between hover:border-[#00754a] transition">
+        <div>
+          <div class="w-10 h-10 rounded-lg bg-[#f0f0f0] text-[#043168] flex items-center justify-center text-xl mb-3">
+            <i class="ti ti-folders"></i>
+          </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#878787]">Halaman 3</span>
+          <h3 class="text-[16px] font-bold text-black mt-1">Daftar Style</h3>
+          <p class="text-[12px] text-[#878787] mt-2 leading-relaxed">
+            Daftar style beserta thumbnail preview foto (bra/underwear), filter buyer, kartu Folder Week (WK), pencarian artikel, dan alokasi style.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#f0f0f0]">
+          <a href="daftar-style.html" class="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-[6px] bg-[#043168] hover:bg-[#0a3a78] text-white font-semibold text-xs shadow-xs transition">
+            <span>Buka Prototipe Daftar Style</span>
+            <i class="ti ti-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="bg-white border-t border-[#caced0] py-4 text-center text-xs text-[#878787]">
+    BRA Running Style · Sandbox Prototipe UI Mandiri · Localhost:8123
+  </footer>
+
+</body>
+</html>

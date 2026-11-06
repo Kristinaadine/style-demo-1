@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Master · Prototype</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="role-auth.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Archivo"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: "Archivo", system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #000; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-row antialiased text-[13px]">
+
+  <!-- SIDEBAR (Identical to Live App Navy Rail) -->
+  <aside class="w-[236px] bg-[#043168] text-[#e0ece6] flex-shrink-0 flex flex-col justify-between sticky top-0 h-screen select-none z-30">
+    <div>
+      <!-- Brand Header -->
+      <div class="min-h-[88px] px-5 py-[22px] flex items-center gap-2.5 border-b border-[#0a3a78]/40">
+        <img class="w-11 h-11 object-contain rounded bg-[#fbfbfb] p-0.5 shadow-xs" src="../assets/bra-logo.png" alt="Logo BRA">
+        <div>
+          <span class="block text-[#e8eef6] text-[12px] font-semibold tracking-[0.14em] leading-tight">RUNNING STYLE</span>
+          <span class="block text-[12px] text-[#8fa0b6] mt-0.5">Planner · Data · Berkas</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="px-3 pt-3">
+        <p class="px-2 pb-1.5 text-[11px] font-medium tracking-[0.1em] text-[#8fa0b6] uppercase">Menu utama</p>
+        
+        <!-- Inactive: Planner (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-calendar-week text-[15px] text-[#8fa0b6]"></i>
+          <span>Planner</span>
+        </div>
+
+        <!-- Active: Data Master (Green button) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[#00754a] text-white font-medium mb-1 shadow-xs">
+          <i class="ti ti-table text-[15px]"></i>
+          <span>Data Master</span>
+        </div>
+
+        <!-- Inactive: Daftar Style (Plain Text, Non-clickable, NO badge) -->
+        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#e0ece6] cursor-default mb-1">
+          <i class="ti ti-folders text-[15px] text-[#8fa0b6]"></i>
+          <span>Daftar Style</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="p-5 border-t border-[#22374f] text-[12px] text-[#8fa0b6] leading-relaxed">
+      <strong class="block text-[#cdd8e6] font-medium">Running Style</strong>
+      <span>Kelola update dan berkas style.</span>
+      <div class="pt-3 mt-2 border-t border-[#193250] flex flex-col gap-1.5">
+        <a href="index.html" class="text-[11px] text-[#cdd8e6] hover:text-white underline flex items-center gap-1">
+          <i class="ti ti-layout-dashboard text-xs"></i> Ke Portal Prototipe
+        </a>
+        <a href="../index.html#/data-master" class="text-[11px] text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1">
+          <i class="ti ti-arrow-back-up text-xs"></i> Buka Portal Live Asli
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="flex-1 flex flex-col min-w-0 bg-[#f0f0f0]">
+    
+    <!-- Topbar -->
+    <header class="h-16 bg-[#fbfbfb] border-b border-[#caced0] sticky top-0 z-20 flex items-center justify-between px-8">
+      <div class="flex items-center gap-2 text-[14px] font-semibold text-black">
+        <span>Data Master</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="dmRoleSelector" class="max-w-xs"></div>
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#00754a] hover:bg-[#00603c] text-white shadow-xs transition">
+          <i class="ti ti-palette"></i>
+          <span>Portal Prototype UI (Tailwind)</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="p-8 max-w-[1400px] w-full mx-auto space-y-6">
+      
+      <!-- Page Heading & Actions Bar -->
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div>
+          <h1 class="text-[22px] font-bold text-black tracking-tight">Data Master</h1>
+          <p class="text-[12px] text-[#878787] mt-1">Cari dan perbarui informasi style, jadwal, PIC, status template, foto fitting, dan keterangan.</p>
+        </div>
+        
+        <!-- Right Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2" id="dmActionButtons"></div>
+      </div>
+
+      <!-- CARD 1: Folder Week / WK (Horizontal Carousel matching Image 2) -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+        <div class="mb-4">
+          <h2 class="text-[15px] font-bold text-black">Folder Week / WK</h2>
+          <p class="text-[12px] text-[#878787] mt-0.5">Klik folder minggu untuk menampilkan style Data Master pada minggu tersebut.</p>
+        </div>
+
+        <!-- Carousel Row -->
+        <div class="overflow-x-auto pb-2 flex items-center gap-3" id="weekCarouselContainer">
+          <!-- Populated from storage/data -->
+        </div>
+      </section>
+
+      <!-- Accordion Button: Tambah Style -->
+      <div id="addStyleFormContainer"></div>
+
+      <!-- CARD 2: Index running style (Exact Table from Image 2) -->
+      <section class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-[15px] font-bold text-black">Index running style</h2>
+            <p id="masterCountText" class="text-[12px] text-[#878787] mt-0.5">Menampilkan 188 dari 188 style</p>
+          </div>
+          <div class="relative w-64">
+            <input id="masterSearch" placeholder="Cari article / buyer..." class="w-full px-3 py-1.5 text-xs rounded border border-[#caced0] focus:border-[#00754a] outline-none">
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto border border-[#caced0] rounded-[8px]">
+          <table class="w-full text-left border-collapse bg-white text-[12px]">
+            <thead>
+              <tr class="bg-[#fbfbfb] border-b border-[#caced0] text-[11px] font-bold uppercase tracking-wider text-[#878787]">
+                <th class="py-3 px-3.5 whitespace-nowrap">
+                  <div class="flex items-center gap-1">PRODUCT / ARTICLE <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">WEEK <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">OPD <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">DELIVERY DATE <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">BUYER <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">PRODUCT GROUP <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">NB/B <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1">PIC PM / MD <i class="ti ti-chevron-down text-xs"></i></div>
+                </th>
+                <th class="py-3 px-3 whitespace-nowrap">TEMPLATE PHOTO</th>
+                <th class="py-3 px-3 whitespace-nowrap">FOTO FITTING</th>
+              </tr>
+            </thead>
+            <tbody id="masterTableBody" class="divide-y divide-[#caced0]/60">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // --- Role-Based Access Control ---
+    const currentRole = RoleAuth.getCurrentRole();
+    if (!currentRole) {
+      location.href = "index.html";
+    }
+    if (!RoleAuth.canAccessPage(currentRole, "data-master")) {
+      document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-[#f0f0f0] p-8">
+          <div class="bg-white rounded-[10px] border border-[#caced0] p-8 shadow-xs max-w-md w-full text-center">
+            <div class="w-12 h-12 rounded-full bg-[#fdebe5] text-[#b64a20] flex items-center justify-center mx-auto mb-4">
+              <i class="ti ti-lock text-xl"></i>
+            </div>
+            <h2 class="text-[16px] font-bold text-black mb-2">Halaman Tidak Dapat Diakses</h2>
+            <p class="text-[13px] text-[#878787] mb-6">
+              Role <strong>${RoleAuth.ROLES[currentRole].label}</strong> tidak memiliki akses ke halaman Data Master.
+            </p>
+            <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-[6px] bg-[#043168] hover:bg-[#0a3a78] text-white font-semibold text-xs shadow-xs transition">
+              <i class="ti ti-arrow-left"></i> Kembali ke Pilihan Role
+            </a>
+          </div>
+        </div>
+      `;
+      throw new Error("Access denied");
+    }
+
+    const dmPerm = RoleAuth.getPermission(currentRole, "data-master");
+
+    // Render action buttons conditionally
+    const actionContainer = document.getElementById("dmActionButtons");
+    let hasAnyAction = false;
+    let buttonsHtml = '';
+
+    if (dmPerm.addStyle) {
+      buttonsHtml += `<button type="button" onclick="toggleAddForm()" class="px-3.5 py-2 rounded-[6px] bg-[#00754a] hover:bg-[#00603c] text-white font-medium text-[12px] shadow-2xs"><i class="ti ti-plus"></i> Tambah Style</button>`;
+      hasAnyAction = true;
+    }
+    if (dmPerm.import) {
+      buttonsHtml += `<button type="button" onclick="alert('Import Excel')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-white border border-[#caced0] text-black font-medium text-[12px] hover:bg-[#f8f9fa] shadow-2xs"><i class="ti ti-upload"></i> Import Excel</button>`;
+      hasAnyAction = true;
+    }
+    if (dmPerm.export) {
+      buttonsHtml += `<button type="button" onclick="alert('Export Excel')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-white border border-[#caced0] text-black font-medium text-[12px] hover:bg-[#f8f9fa] shadow-2xs"><i class="ti ti-download"></i> Export Excel</button>`;
+      hasAnyAction = true;
+    }
+    if (dmPerm.reset) {
+      buttonsHtml += `<button type="button" onclick="if(confirm('Reset data?')) alert('Data di-reset');" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-white border border-[#caced0] text-[#a33a3a] font-medium text-[12px] hover:bg-[#fff0f0] shadow-2xs"><i class="ti ti-trash"></i> Reset Data</button>`;
+      hasAnyAction = true;
+    }
+    if (!hasAnyAction) {
+      buttonsHtml = `<span class="text-[11px] text-[#878787] font-medium">Mode hanya-baca (view & filter)</span>`;
+    }
+    actionContainer.innerHTML = buttonsHtml;
+
+    // Render add style form conditionally
+    const addFormContainer = document.getElementById("addStyleFormContainer");
+    if (dmPerm.addStyle) {
+      addFormContainer.innerHTML = `
+        <div class="bg-white rounded-[10px] border border-[#caced0] px-5 py-3 shadow-xs">
+          <button type="button" onclick="toggleAddForm()" class="flex items-center gap-2 text-[13px] font-semibold text-black hover:text-[#00754a]">
+            <i class="ti ti-plus text-[#00754a]"></i>
+            <span>Tambah style ke Data Master</span>
+          </button>
+          <div id="addStyleFormWrap" class="hidden mt-4 pt-4 border-t border-[#f0f0f0]">
+            <form id="addStyleForm" class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-[#454845] uppercase mb-1">Article / Product *</label>
+                <input id="newArticle" required placeholder="#1808" class="w-full p-2 rounded border border-[#caced0]">
+              </div>
+              <div>
+                <label class="block font-bold text-[#454845] uppercase mb-1">Week (WK) *</label>
+                <input id="newWeek" required placeholder="WK 8" class="w-full p-2 rounded border border-[#caced0]">
+              </div>
+              <div>
+                <label class="block font-bold text-[#454845] uppercase mb-1">Buyer</label>
+                <input id="newBuyer" placeholder="AME / VS" class="w-full p-2 rounded border border-[#caced0]">
+              </div>
+              <div>
+                <label class="block font-bold text-[#454845] uppercase mb-1">Product Group</label>
+                <input id="newGroup" placeholder="B-Bra" class="w-full p-2 rounded border border-[#caced0]">
+              </div>
+              <div class="sm:col-span-4 flex justify-end gap-2 pt-2">
+                <button type="button" onclick="toggleAddForm()" class="px-3.5 py-1.5 rounded border border-[#caced0] text-black">Batal</button>
+                <button type="submit" class="px-4 py-1.5 rounded bg-[#00754a] text-white font-semibold">Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function getStoredData() {
+      try {
+        const raw = localStorage.getItem("bra-running-style-v3") || localStorage.getItem("bra-running-style-v2");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.styles) && parsed.styles.length > 0) {
+            return parsed.styles;
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    // Default sample styles matching Image 2
+    const fallbackStyles = [
+      { id: "#1808", name: "Nama product / style", week: "WK 8", opd: "02/06/2026", delivery: "05/18/2026", buyer: "AME", group: "B-Bra", nb: "NB", pic: "-", templateStatus: "missing", photoStatus: "missing" },
+      { id: "#1809", name: "Nama product / style", week: "WK 8", opd: "02/06/2026", delivery: "05/18/2026", buyer: "AME", group: "B-Bra", nb: "NB", pic: "-", templateStatus: "missing", photoStatus: "missing" },
+      { id: "#1810", name: "Nama product / style", week: "WK 8", opd: "02/06/2026", delivery: "05/18/2026", buyer: "AME", group: "B-Bra", nb: "NB", pic: "-", templateStatus: "missing", photoStatus: "missing" },
+      { id: "#1811", name: "Nama product / style", week: "WK 8", opd: "02/06/2026", delivery: "05/18/2026", buyer: "AME", group: "B-Bra", nb: "NB", pic: "-", templateStatus: "missing", photoStatus: "missing" },
+      { id: "10345161", name: "Wireless Lightly Lined Bra", week: "WK 42", opd: "10/12/2026", delivery: "11/20/2026", buyer: "VS", group: "B-Bra", nb: "NB", pic: "A. Wulandari", templateStatus: "ready", photoStatus: "ready" },
+      { id: "10767R", name: "Seamless shaping brief", week: "WK 42", opd: "10/15/2026", delivery: "11/28/2026", buyer: "SPANX", group: "P-Brief", nb: "B", pic: "F. Ramadhan", templateStatus: "missing", photoStatus: "missing" },
+      { id: "WC-88214", name: "Everyday comfort bra", week: "WK 41", opd: "10/01/2026", delivery: "11/15/2026", buyer: "WACOAL", group: "B-Bra", nb: "B", pic: "N. Kusuma", templateStatus: "ready", photoStatus: "ready" }
+    ];
+
+    const rawStored = getStoredData();
+    let masterStyles = rawStored ? rawStored.map(s => ({
+      id: s.id || "-",
+      name: s.desc || "Nama product / style",
+      week: s.week || "WK 8",
+      opd: s.opd || "02/06/2026",
+      delivery: s.deliveryDate || "05/18/2026",
+      buyer: s.buyer || "AME",
+      group: s.productGroupMaster || s.group || "B-Bra",
+      nb: s.nb || "NB",
+      pic: s.picMaster || (s.pic ? s.pic.mdmkt : "-") || "-",
+      templateStatus: s.templatePhotoStatus === "ready" ? "ready" : "missing",
+      photoStatus: s.photoUploaded ? "ready" : "missing"
+    })) : fallbackStyles;
+
+    const weekCards = [
+      { week: "WK 7", date: "05 Nov 2026", styles: 14, files: 1 },
+      { week: "WK 11-14", date: "05 Nov 2026", styles: 63, files: 1 },
+      { week: "WK 10", date: "05 Nov 2026", styles: 21, files: 1 },
+      { week: "WK 9", date: "05 Nov 2026", styles: 7, files: 1 },
+      { week: "WK 8", date: "05 Nov 2026", styles: 18, files: 1 }
+    ];
+
+    let activeWeekFilter = null;
+
+    function renderCarousel() {
+      const c = document.getElementById("weekCarouselContainer");
+      c.innerHTML = weekCards.map(w => {
+        const isSelected = activeWeekFilter === w.week;
+        return `
+          <button type="button" onclick="selectWeek('${w.week}')" class="flex-shrink-0 text-left p-3.5 rounded-[8px] border transition min-w-[210px] ${
+            isSelected ? 'bg-[#e9f3ee] border-[#00754a] shadow-2xs' : 'bg-[#fbfbfb] hover:bg-[#f0f0f0] border-[#caced0]'
+          }">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="ti ti-folder text-[17px] text-[#878787]"></i>
+              <strong class="font-bold text-black text-[13px] mono">${w.week}</strong>
+            </div>
+            <div class="text-[11px] text-[#878787] leading-tight mt-1">
+              ${w.date} · ${w.styles} style · ${w.files} file Planner
+            </div>
+          </button>
+        `;
+      }).join("") + `
+        <button type="button" onclick="selectWeek(null)" class="flex-shrink-0 text-left p-3.5 rounded-[8px] border ${
+          !activeWeekFilter ? 'bg-[#e9f3ee] border-[#00754a]' : 'bg-[#fbfbfb] border-[#caced0]'
+        }">
+          <div class="font-bold text-[12px] text-black">Tampilkan Semua</div>
+          <div class="text-[11px] text-[#878787]">Semua Minggu</div>
+        </button>
+      `;
+    }
+
+    function selectWeek(wk) {
+      activeWeekFilter = activeWeekFilter === wk ? null : wk;
+      renderCarousel();
+      renderMasterTable();
+    }
+
+    function renderMasterTable() {
+      const tbody = document.getElementById("masterTableBody");
+      const search = (document.getElementById("masterSearch").value || "").toLowerCase().trim();
+
+      const filtered = masterStyles.filter(s => {
+        const matchWk = !activeWeekFilter || s.week === activeWeekFilter;
+        const matchSearch = !search || s.id.toLowerCase().includes(search) || s.buyer.toLowerCase().includes(search) || s.name.toLowerCase().includes(search);
+        return matchWk && matchSearch;
+      });
+
+      document.getElementById("masterCountText").textContent = `Menampilkan ${filtered.length} dari ${masterStyles.length} style`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="py-8 text-center text-[#878787]">Tidak ada data style ditemukan.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        return `
+          <tr class="hover:bg-[#fbfbfb] transition">
+            <td class="py-2.5 px-3.5 align-middle">
+              <strong class="text-black text-[13px] mono block">${s.id}</strong>
+              <span class="text-[11px] text-[#878787]">${s.name}</span>
+            </td>
+            <td class="py-2.5 px-3 align-middle mono font-bold text-black whitespace-nowrap">${s.week}</td>
+            <td class="py-2.5 px-3 align-middle text-black whitespace-nowrap">${s.opd}</td>
+            <td class="py-2.5 px-3 align-middle text-black whitespace-nowrap">${s.delivery}</td>
+            <td class="py-2.5 px-3 align-middle font-medium text-black whitespace-nowrap">${s.buyer}</td>
+            <td class="py-2.5 px-3 align-middle text-black whitespace-nowrap">${s.group}</td>
+            <td class="py-2.5 px-3 align-middle text-black whitespace-nowrap">${s.nb}</td>
+            <td class="py-2.5 px-3 align-middle text-black whitespace-nowrap">${s.pic}</td>
+            <td class="py-2.5 px-3 align-middle whitespace-nowrap">
+              ${s.templateStatus === 'ready' 
+                ? '<span class="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-[#e9f3ee] text-[#00754a]">Siap</span>'
+                : '<span class="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold border border-[#a33a3a] text-[#a33a3a]">Belum Ada</span>'}
+            </td>
+            <td class="py-2.5 px-3 align-middle whitespace-nowrap">
+              ${s.photoStatus === 'ready' 
+                ? '<span class="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-[#e9f3ee] text-[#00754a]">Siap</span>'
+                : '<span class="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold border border-[#a33a3a] text-[#a33a3a]">Belum Ada</span>'}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function toggleAddForm() {
+      document.getElementById("addStyleFormWrap").classList.toggle("hidden");
+    }
+
+    document.getElementById("addStyleForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newS = {
+        id: document.getElementById("newArticle").value.trim(),
+        name: "Style Baru",
+        week: document.getElementById("newWeek").value.trim(),
+        opd: "02/06/2026",
+        delivery: "05/18/2026",
+        buyer: document.getElementById("newBuyer").value.trim() || "AME",
+        group: document.getElementById("newGroup").value.trim() || "B-Bra",
+        nb: "NB",
+        pic: "-",
+        templateStatus: "missing",
+        photoStatus: "missing"
+      };
+      masterStyles.unshift(newS);
+      renderMasterTable();
+      toggleAddForm();
+      document.getElementById("addStyleForm").reset();
+      alert("Style " + newS.id + " berhasil ditambahkan!");
+    });
+
+    document.getElementById("masterSearch").addEventListener("input", renderMasterTable);
+
+    renderCarousel();
+    renderMasterTable();
+
+    // Initialize role selector
+    RoleAuth.renderRoleSelector("dmRoleSelector");
+  </script>
+</body>
+</html>
