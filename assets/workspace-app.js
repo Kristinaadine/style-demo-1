@@ -151,37 +151,383 @@
     }));
   }
 
+  
+  const WORKSPACE_ROLES = {
+    admin: {
+      id: "admin",
+      label: "Admin",
+      subLabel: "Administrator (Akses Penuh)",
+      badgeColor: "#043168",
+      badgeText: "Admin",
+      icon: "ti-shield-check",
+      avatar: "👑",
+      routes: ["planner", "data-master", "daftar-style"],
+      defaultRoute: "planner",
+      canReset: true,
+      canImport: true,
+      canExport: true,
+      canAdd: true,
+      canEdit: true,
+      canUpload: true,
+      canUploadFiles: true,
+      canDelete: true,
+      canDeleteFiles: true,
+      canUploadPlanner: true,
+      canDownload: true,
+      canPreview: true,
+      description: "Memantau & mengelola seluruh modul sistem (Planner, Data Master, Daftar Style) serta kontrol database & reset."
+    },
+    planner: {
+      id: "planner",
+      label: "Planner",
+      subLabel: "Planner (Rista)",
+      badgeColor: "#00754a",
+      badgeText: "Planner",
+      icon: "ti-calendar-event",
+      avatar: "📋",
+      routes: ["planner"],
+      defaultRoute: "planner",
+      canReset: false,
+      canImport: true,
+      canExport: false,
+      canAdd: false,
+      canEdit: true,
+      canUpload: false,
+      canUploadFiles: false,
+      canDelete: true,
+      canDeleteFiles: false,
+      canUploadPlanner: true,
+      canDownload: true,
+      canPreview: true,
+      description: "Khusus menerima & mengunggah berkas New Style Updated mingguan, pratinjau spreadsheet, dan import ke Data Master."
+    },
+    ie: {
+      id: "ie",
+      label: "IE",
+      subLabel: "IE (Suci)",
+      badgeColor: "#1d4ed8",
+      badgeText: "IE",
+      icon: "ti-ruler-measure",
+      avatar: "📐",
+      routes: ["data-master", "daftar-style"],
+      defaultRoute: "data-master",
+      canReset: false,
+      canImport: true,
+      canExport: true,
+      canAdd: true,
+      canEdit: true,
+      canUpload: true,
+      canUploadFiles: true,
+      canDelete: true,
+      canDeleteFiles: true,
+      canUploadPlanner: false,
+      canDownload: true,
+      canPreview: true,
+      description: "Mengelola detail spesifikasi style di Data Master dan Daftar Style: delivery OPD, tambah style, import/export Excel, dan upload berkas teknis."
+    },
+    design: {
+      id: "design",
+      label: "Design",
+      subLabel: "Design (Tim)",
+      badgeColor: "#7c3aed",
+      badgeText: "Design",
+      icon: "ti-palette",
+      avatar: "🎨",
+      routes: ["planner", "data-master", "daftar-style"],
+      defaultRoute: "daftar-style",
+      canReset: false,
+      canImport: false,
+      canExport: false,
+      canAdd: false,
+      canEdit: false,
+      canUpload: false,
+      canUploadFiles: true,
+      canDelete: false,
+      canDeleteFiles: false,
+      canUploadPlanner: false,
+      canDownload: true,
+      canPreview: true,
+      description: "Memantau data di Planner, Data Master, dan Daftar Style serta mengunggah berkas foto/desain/fitting ke folder style."
+    },
+    manager: {
+      id: "manager",
+      label: "Manajer",
+      subLabel: "Manajer (Executive)",
+      badgeColor: "#b45309",
+      badgeText: "Manajer",
+      icon: "ti-briefcase",
+      avatar: "👔",
+      routes: ["planner", "data-master", "daftar-style"],
+      defaultRoute: "planner",
+      canReset: false,
+      canImport: false,
+      canExport: false,
+      canAdd: false,
+      canEdit: false,
+      canUpload: false,
+      canUploadFiles: false,
+      canDelete: false,
+      canDeleteFiles: false,
+      canUploadPlanner: false,
+      canDownload: true,
+      canPreview: true,
+      description: "Mengakses seluruh halaman (Planner, Data Master, Daftar Style) dalam mode monitoring dan pengawasan menyeluruh (lihat & unduh)."
+    }
+  };
+
+  function getActiveRole() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qRole = urlParams.get("role");
+      if (qRole && WORKSPACE_ROLES[qRole]) {
+        localStorage.setItem("bra-running-style-role", qRole);
+        return qRole;
+      }
+    } catch (_) {}
+
+    try {
+      const stored = localStorage.getItem("bra-running-style-role");
+      if (stored && WORKSPACE_ROLES[stored]) return stored;
+    } catch (_) {}
+
+    return "admin"; // Default to Administrator for the live portal as requested!
+  }
+
+  function setActiveRole(roleId) {
+    if (!WORKSPACE_ROLES[roleId]) return;
+    localStorage.setItem("bra-running-style-role", roleId);
+
+    if (window.BRA && window.BRA.setRole) {
+      const bRoleMap = { admin: "admin", planner: "md", ie: "ie", design: "pattern", manager: "qa" };
+      window.BRA.setRole(bRoleMap[roleId] || "admin");
+    }
+
+    const roleObj = WORKSPACE_ROLES[roleId];
+    const info = routeInfo();
+    const currentBaseRoute = info.route === "folder-style" ? "daftar-style" : info.route;
+    if (roleObj.routes.indexOf(currentBaseRoute) === -1) {
+      window.location.hash = "#/" + roleObj.defaultRoute;
+    } else {
+      render();
+    }
+  }
+
+  K.getActiveRole = getActiveRole;
+  K.setActiveRole = setActiveRole;
+  K.WORKSPACE_ROLES = WORKSPACE_ROLES;
+  K.can = function (capability) {
+    const roleId = getActiveRole();
+    const roleObj = WORKSPACE_ROLES[roleId] || WORKSPACE_ROLES.admin;
+    return Boolean(roleObj[capability]);
+  };
+
+  const ROLE_MENU_ID = "role-menu";
+
+  function roleMenuTriggers() {
+    return Array.from(document.querySelectorAll("[data-workspace-action='switch-role']"));
+  }
+
+  function closeRoleMenu() {
+    const menu = document.getElementById(ROLE_MENU_ID);
+    if (!menu) return;
+    menu.remove();
+    roleMenuTriggers().forEach(function (trigger) {
+      trigger.classList.remove("is-open");
+      trigger.setAttribute("aria-expanded", "false");
+    });
+    document.removeEventListener("pointerdown", onRoleMenuPointerDown, true);
+    document.removeEventListener("keydown", onRoleMenuKeyDown, true);
+    window.removeEventListener("resize", closeRoleMenu);
+    window.removeEventListener("scroll", closeRoleMenu, true);
+  }
+
+  function onRoleMenuPointerDown(event) {
+    if (event.target.closest("#" + ROLE_MENU_ID)) return;
+    if (event.target.closest("[data-workspace-action='switch-role']")) return;
+    closeRoleMenu();
+  }
+
+  function onRoleMenuKeyDown(event) {
+    const menu = document.getElementById(ROLE_MENU_ID);
+    if (!menu) return;
+    if (event.key === "Escape") {
+      const hadFocus = menu.contains(document.activeElement);
+      closeRoleMenu();
+      const trigger = document.querySelector(".topbar-user-btn");
+      if (hadFocus && trigger) trigger.focus();
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const items = Array.from(menu.querySelectorAll("[data-role-option]"));
+    if (!items.length) return;
+    event.preventDefault();
+    const index = items.indexOf(document.activeElement);
+    const next = event.key === "ArrowDown"
+      ? (index + 1) % items.length
+      : (index - 1 + items.length) % items.length;
+    items[next].focus();
+  }
+
+  function positionRoleMenu(menu, anchor) {
+    const gap = 8;
+    const rect = anchor.getBoundingClientRect();
+    const width = menu.offsetWidth;
+    const height = menu.offsetHeight;
+    let left = rect.right - width;
+    if (left < gap) left = rect.left;
+    left = Math.min(Math.max(left, gap), window.innerWidth - width - gap);
+    let top = rect.bottom + gap;
+    if (top + height > window.innerHeight - gap) {
+      top = rect.top - height - gap;
+      if (top < gap) top = Math.max(gap, window.innerHeight - height - gap);
+    }
+    menu.style.left = Math.round(left) + "px";
+    menu.style.top = Math.round(top) + "px";
+  }
+
+  function openRoleMenu(anchorEl) {
+    if (document.getElementById(ROLE_MENU_ID)) {
+      closeRoleMenu();
+      return;
+    }
+    const anchor = anchorEl || document.querySelector(".topbar-user-btn") || roleMenuTriggers()[0];
+    if (!anchor) return;
+
+    const current = getActiveRole();
+    const currentRole = WORKSPACE_ROLES[current] || WORKSPACE_ROLES.admin;
+    const options = Object.keys(WORKSPACE_ROLES).map(function (key) {
+      const role = WORKSPACE_ROLES[key];
+      const isActive = key === current;
+      return '<button type="button" class="role-menu__item' + (isActive ? " is-active" : "") + '"' +
+        ' role="menuitemradio" aria-checked="' + (isActive ? "true" : "false") + '"' +
+        ' data-role-option="' + role.id + '">' +
+          '<span class="role-menu__avatar" aria-hidden="true">' + role.avatar + "</span>" +
+          '<span class="role-menu__text">' +
+            '<span class="role-menu__label">' + K.esc(role.label) + "</span>" +
+            '<span class="role-menu__sub">' + K.esc(role.subLabel) + "</span>" +
+          "</span>" +
+          (isActive ? '<i class="ti ti-check role-menu__check" aria-hidden="true"></i>' : "") +
+        "</button>";
+    }).join("");
+
+    const menu = document.createElement("div");
+    menu.id = ROLE_MENU_ID;
+    menu.className = "role-menu";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Ganti peran pengguna");
+    menu.innerHTML =
+      '<div class="role-menu__head">' +
+        '<span class="role-menu__head-title"><i class="ti ti-user-switch" aria-hidden="true"></i> Simulasi login / ganti role</span>' +
+        '<span class="role-menu__head-sub">Aktif: ' + K.esc(currentRole.label) + " · " + K.esc(currentRole.subLabel) + "</span>" +
+      "</div>" +
+      '<div class="role-menu__list">' + options + "</div>" +
+      '<div class="role-menu__foot">Setiap peran hanya melihat halaman & fitur miliknya.</div>';
+    document.body.appendChild(menu);
+    positionRoleMenu(menu, anchor);
+    anchor.classList.add("is-open");
+    anchor.setAttribute("aria-expanded", "true");
+
+    menu.querySelectorAll("[data-role-option]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const roleId = button.dataset.roleOption;
+        closeRoleMenu();
+        if (roleId === getActiveRole()) {
+          K.toast("Anda sudah memakai peran " + WORKSPACE_ROLES[roleId].label + ".", "ok");
+          return;
+        }
+        setActiveRole(roleId);
+        K.toast("Beralih ke peran: " + WORKSPACE_ROLES[roleId].label, "ok");
+      });
+    });
+
+    document.addEventListener("pointerdown", onRoleMenuPointerDown, true);
+    document.addEventListener("keydown", onRoleMenuKeyDown, true);
+    window.addEventListener("resize", closeRoleMenu);
+    window.addEventListener("scroll", closeRoleMenu, true);
+
+    const activeItem = menu.querySelector("[data-role-option].is-active");
+    if (activeItem) activeItem.focus({ preventScroll: true });
+  }
+  K.openRoleMenu = openRoleMenu;
+  K.closeRoleMenu = closeRoleMenu;
+  K.showRoleModal = openRoleMenu;
+
   function routeInfo() {
     const parts = (window.location.hash || "#/planner").replace(/^#\/?/, "").split("/");
     return { route: parts[0] || "planner", id: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
 
   function render() {
+    const currentRole = getActiveRole();
+    const roleObj = WORKSPACE_ROLES[currentRole] || WORKSPACE_ROLES.admin;
     const info = routeInfo();
-    if (!NAV.some(function (item) { return item.id === info.route; }) && !K.views[info.route]) {
-      window.location.hash = "#/planner";
+
+    // Determine the base route
+    const currentBaseRoute = info.route === "folder-style" ? "daftar-style" : info.route;
+
+    // Check if current route is allowed for this role
+    if (roleObj.routes.indexOf(currentBaseRoute) === -1) {
+      // Silent redirect! No error prompt, no "Tidak Punya Akses" banner.
+      window.location.hash = "#/" + roleObj.defaultRoute;
       return;
     }
 
-    const active = info.route === "folder-style" ? "daftar-style" : info.route;
+    if (!NAV.some(function (item) { return item.id === info.route; }) && !K.views[info.route]) {
+      window.location.hash = "#/" + roleObj.defaultRoute;
+      return;
+    }
+
+    const active = currentBaseRoute;
+
+    // Filter navigation menus according to active role permissions
+    const allowedNav = NAV.filter(function (item) {
+      return roleObj.routes.indexOf(item.id) !== -1;
+    });
+
+    // Build Rail (Sidebar)
+    let railFootContent = "";
+    if (roleObj.canReset) {
+      railFootContent =
+        '<div class="rail-foot"><strong>Running Style</strong>Kelola update dan berkas style.' +
+        '<button type="button" data-workspace-reset="demo">Kembalikan data contoh</button>' +
+        '<button type="button" class="rail-danger-link" data-workspace-reset="testing">Kosongkan semua data uji</button>' +
+        '</div>';
+    } else {
+      railFootContent =
+        '<div class="rail-foot"><strong>Running Style</strong>' +
+        '<span style="font-size:11px; color:#8fa0b6; display:block; margin-top:2px;">Role: ' + K.esc(roleObj.subLabel) + '</span>' +
+        '<button type="button" data-workspace-action="switch-role" style="color:#00e599; font-weight:600; text-decoration:none; margin-top:8px; display:inline-flex; align-items:center; gap:4px; font-size:11.5px; background:none; border:none; padding:0; cursor:pointer;">' +
+          '<i class="ti ti-user-switch"></i> Ganti Role / Akun' +
+        '</button>' +
+        '</div>';
+    }
+
     rail.innerHTML =
       '<div class="brand"><img class="brand__mark" src="assets/bra-logo.png" alt="Logo BRA"><span>' +
         '<span class="brand__name">RUNNING STYLE</span>' +
         '<span class="brand__sub">Planner · Data · Berkas</span></span></div>' +
+      '<div class="user-profile-badge" data-workspace-action="switch-role" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false" title="Ganti role / simulasi login">' +
+        '<span class="user-avatar">' + roleObj.avatar + '</span>' +
+        '<div class="user-meta">' +
+          '<span class="user-name">' + K.esc(roleObj.label) + '</span>' +
+          '<span class="user-role">' + K.esc(roleObj.subLabel) + '</span>' +
+        '</div>' +
+        '<i class="ti ti-chevron-right" style="font-size:12px; opacity:0.6; color:#fff;"></i>' +
+      '</div>' +
       '<div class="nav-group"><p class="nav-label">Menu utama</p>' +
-        NAV.map(function (item) {
+        allowedNav.map(function (item) {
           return '<a class="nav-item' + (active === item.id ? " is-active" : "") +
             '" href="#/' + item.id + '">' +
             '<i class="ti ' + item.icon + '" aria-hidden="true"></i><span>' +
             K.esc(item.label) + "</span></a>";
         }).join("") +
-      '</div><div class="rail-foot"><strong>Running Style</strong>Kelola update dan berkas style.' +
-      '<button type="button" data-workspace-reset="demo">Kembalikan data contoh</button>' +
-      '<button type="button" class="rail-danger-link" data-workspace-reset="testing">Kosongkan semua data uji</button></div>';
+      '</div>' + railFootContent;
 
+    // Topbar
     const navItem = NAV.filter(function (item) {
-      return item.id === (info.route === "folder-style" ? "daftar-style" : info.route);
+      return item.id === currentBaseRoute;
     })[0] || { title: "Folder Style" };
+
     const isSubPage = !NAV.some(function (item) { return item.id === info.route; }) || Boolean(info.id);
     const backButton = isSubPage
       ? ((info.route === "folder-style" || (info.route === "daftar-style" && info.id))
@@ -192,21 +538,29 @@
               '<i class="ti ti-arrow-left" aria-hidden="true"></i><span>Kembali</span>' +
             '</button>')
       : '';
+
     topbar.innerHTML =
       '<button class="btn nav-toggle" data-workspace-action="toggle-nav" aria-label="Buka navigasi">' +
         '<i class="ti ti-menu"></i></button>' +
       backButton +
-      '<div class="crumb"><span class="crumb__current">' + K.esc(navItem.title) +
-        "</span></div>" +
-      '<div style="margin-left:auto; display:flex; align-items:center; gap:8px;">' +
-        '<a href="prototype/index.html" style="display:inline-flex; align-items:center; gap:6px; background:#047857; color:#ffffff; padding:6px 14px; border-radius:9999px; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 2px 4px rgba(4,120,87,0.25); transition:opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1">' +
+      '<div class="crumb"><span class="crumb__current">' + K.esc(navItem.title) + "</span></div>" +
+      '<div style="margin-left:auto; display:flex; align-items:center; gap:10px;">' +
+        (currentRole === "admin"
+          ? '<span class="admin-portal-pill"><i class="ti ti-shield-check"></i> <span>Portal Administrator (Full Access)</span></span>'
+          : '<button type="button" class="btn" data-workspace-action="set-role-admin" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:5px 12px; background:#043168; color:#fff; border-radius:9999px; border:none; font-weight:600; cursor:pointer;"><i class="ti ti-shield-check"></i> Kembali ke Mode Admin</button>') +
+        '<button type="button" class="topbar-user-btn" data-workspace-action="switch-role" title="Ganti role / simulasi login" aria-haspopup="menu" aria-expanded="false" aria-label="Ganti role, aktor aktif ' + K.esc(roleObj.label) + '">' +
+          '<span style="font-size:16px;" aria-hidden="true">' + roleObj.avatar + '</span>' +
+          '<span>' + K.esc(roleObj.label) + '</span>' +
+          '<i class="ti ti-chevron-down topbar-user-btn__chev" style="font-size:11px; opacity:0.6;" aria-hidden="true"></i>' +
+        '</button>' +
+        '<a href="prototype/index.html" style="display:inline-flex; align-items:center; gap:6px; background:#00754a; color:#ffffff; padding:6px 14px; border-radius:9999px; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 2px 4px rgba(0,117,74,0.25); transition:opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1">' +
           '<i class="ti ti-palette"></i> <span>Portal Prototype UI (Tailwind)</span>' +
         '</a>' +
       '</div>';
 
     view.innerHTML = K.views[info.route](info);
     hydrateStyleThumbnails();
-    document.title = "BRA · " + navItem.title;
+    document.title = "BRA · " + navItem.title + (currentRole !== "admin" ? " (" + roleObj.label + ")" : " [Administrator]");
     app.classList.remove("is-nav-open");
   }
 
@@ -779,6 +1133,20 @@
     const snapshotMutationControl = event.target.closest("[data-delete-style-row], [data-edit-style-row], [data-rename-style-folder-root], [data-delete-style-folder-root], [data-toggle-style-file-form], [data-rename-file], [data-delete-file], [data-delete-style-folder], [data-style-preview-replace], [data-style-preview-upload]");
     if (snapshotMutationControl && ((K.ui.masterImportId && K.ui.masterImportId !== "current") || (K.ui.styleListImportId && K.ui.styleListImportId !== "current"))) {
       K.toast("Snapshot bersifat hanya-baca. Pilih data aktif untuk mengubah atau menghapus data.", "error");
+      return;
+    }
+
+    
+    const switchRole = event.target.closest("[data-workspace-action='switch-role']");
+    if (switchRole) {
+      openRoleMenu(switchRole);
+      return;
+    }
+
+    const setRoleAdmin = event.target.closest("[data-workspace-action='set-role-admin']");
+    if (setRoleAdmin) {
+      setActiveRole("admin");
+      K.toast("Kembali ke Portal Administrator (Akses Penuh).", "ok");
       return;
     }
 
@@ -1485,8 +1853,16 @@
       K.toast(error.message, "error");
       return;
     }
-    if (!window.location.hash) window.location.hash = "#/planner";
+    const roleObj = WORKSPACE_ROLES[getActiveRole()] || WORKSPACE_ROLES.admin;
+    if (!window.location.hash) window.location.hash = "#/" + roleObj.defaultRoute;
     if (B.requestPersistentStorage) B.requestPersistentStorage();
     render();
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("login") === "1") {
+        setTimeout(function () { openRoleMenu(); }, 200);
+      }
+    } catch (_) {}
   };
 })();

@@ -1,10 +1,10 @@
 /* Role-Based Access Control for BRA Running Style Prototype */
 
 const ROLES = {
-  IE: {
-    label: "IE (Suci)",
-    pages: ["data-master", "daftar-style"],
-    planner: { view: false, download: false, upload: false, import: false, rename: false, delete: false },
+  ADMIN: {
+    label: "Admin",
+    pages: ["planner", "data-master", "daftar-style"],
+    planner: { view: true, download: true, upload: true, import: true, rename: true, delete: true },
     dataMaster: { view: true, edit: true, addStyle: true, import: true, export: true, reset: true, filter: true },
     daftarStyle: { view: true, edit: true, addStyle: true, uploadIndex: true, uploadFile: true, download: true, preview: true }
   },
@@ -15,6 +15,13 @@ const ROLES = {
     dataMaster: { view: false, edit: false, addStyle: false, import: false, export: false, reset: false, filter: false },
     daftarStyle: { view: false, edit: false, addStyle: false, uploadIndex: false, uploadFile: false, download: false, preview: false }
   },
+  IE: {
+    label: "IE (Suci)",
+    pages: ["data-master", "daftar-style"],
+    planner: { view: false, download: false, upload: false, import: false, rename: false, delete: false },
+    dataMaster: { view: true, edit: true, addStyle: true, import: true, export: true, reset: false, filter: true },
+    daftarStyle: { view: true, edit: true, addStyle: true, uploadIndex: true, uploadFile: true, download: true, preview: true }
+  },
   DESIGN: {
     label: "Design (Tim)",
     pages: ["planner", "data-master", "daftar-style"],
@@ -22,7 +29,7 @@ const ROLES = {
     dataMaster: { view: true, edit: false, addStyle: false, import: false, export: false, reset: false, filter: true },
     daftarStyle: { view: true, edit: false, addStyle: false, uploadIndex: false, uploadFile: true, download: true, preview: true }
   },
-  MANAGER: {
+  MANAJER: {
     label: "Manajer",
     pages: ["planner", "data-master", "daftar-style"],
     planner: { view: true, download: true, upload: false, import: false, rename: false, delete: false },
@@ -38,7 +45,7 @@ function getCurrentRole() {
     const stored = localStorage.getItem(CURRENT_ROLE_KEY);
     if (stored && ROLES[stored]) return stored;
   } catch (_) {}
-  return null;
+  return "ADMIN";
 }
 
 function setCurrentRole(roleKey) {

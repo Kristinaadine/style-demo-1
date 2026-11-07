@@ -24,6 +24,21 @@ function parseNumber(value) {
   return isFinite(n) ? n : null;
 }
 
+/**
+ * Konversi timestamp frontend (ISO, "YYYY-MM-DD", dll.) ke format DATETIME
+ * MySQL/MariaDB ("YYYY-MM-DD HH:MM:SS"). MySQL strict mode menolak string
+ * ISO lengkap seperti "2026-11-07T10:00:00.000Z" untuk kolom DATETIME,
+ * yang membuat seluruh transaksi POST /state gagal.
+ */
+function parseDateTime(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  const pad = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+    " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+}
+
 async function getBuyerId(tx, cache, name) {
   const key = String(name || "").trim().toLowerCase();
   if (!key) return null;
@@ -100,6 +115,7 @@ router.post("/blobs/:blobId", upload.single("file"), async (req, res) => {
 router.delete("/blobs/:blobId", async (req, res) => {
   try {
     const blobId = String(req.params.blobId || "").trim().slice(0, 100);
+    if (!blobId) return res.status(422).json({ ok: false, message: "Blob ID wajib diisi." });
     await db.run("DELETE FROM file_blobs WHERE blob_id = ?", [blobId]);
     res.json({ ok: true });
   } catch (err) {
@@ -115,7 +131,8 @@ router.get("/blobs/:blobId", async (req, res) => {
     let content = rows[0].content;
     if (!Buffer.isBuffer(content)) content = Buffer.from(content || []);
     res.setHeader("Content-Type", rows[0].mime_type || "application/octet-stream");
-    res.setHeader("Content-Length", String(rows[0].size_bytes || content.length));
+    // Panjang aktual konten, bukan size_bytes tersimpan — metadata bisa basi.
+    res.setHeader("Content-Length", String(content.length));
     res.setHeader("Cache-Control", "private, no-store");
     res.send(content);
   } catch (err) {
@@ -239,8 +256,8 @@ router.post("/state", async (req, res) => {
               scalar(file.blobId),
               "workspace",
               JSON.stringify(file),
-              scalar(file.uploadedAt),
-              scalar(file.uploadedAt),
+              parseDateTime(file.uploadedAt),
+              parseDateTime(file.uploadedAt),
             ]
           );
           for (const folderName of file.folders || []) {
@@ -280,8 +297,8 @@ router.post("/state", async (req, res) => {
               scalar(file.blobId),
               "planner",
               JSON.stringify(file),
-              scalar(file.receivedAt),
-              scalar(file.receivedAt),
+              parseDateTime(file.receivedAt),
+              parseDateTime(file.receivedAt),
             ]
           );
         } catch (_) {}
@@ -315,7 +332,7 @@ router.post("/state", async (req, res) => {
           batch.added     ? Number(batch.added)     : 0,
           batch.replaced  ? Number(batch.replaced)  : 0,
           batch.skipped   ? Number(batch.skipped)   : 0,
-          scalar(batch.importedAt || batch.at, new Date().toISOString()),
+          parseDateTime(batch.importedAt || batch.at) || parseDateTime(new Date().toISOString()),
         ]);
       }
 

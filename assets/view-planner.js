@@ -9,6 +9,10 @@
   const K = window.K;
 
   function viewPlanner() {
+    const canUploadPlanner = K.can ? K.can("canUploadPlanner") : true;
+    const canImport = K.can ? K.can("canImport") : true;
+    const canDelete = K.can ? K.can("canDelete") : true;
+    const canEdit = K.can ? K.can("canEdit") : true;
     const records = B.get().plannerFiles;
     const importedNames = (B.get().indexImports || []).map(function (imp) {
       return imp.fileName ? imp.fileName.toLowerCase() : "";
@@ -35,22 +39,22 @@
             ' data-file-name="' + K.esc(record.name) + '"' +
             ' data-file-type="' + K.esc(record.type) + '">' +
             '<i class="ti ti-download" aria-hidden="true"></i>Unduh</button>' +
-          '<button type="button" class="btn" data-rename-file="planner"' +
+          (canEdit ? ('<button type="button" class="btn" data-rename-file="planner"' +
             ' data-blob-id="' + K.esc(record.blobId) + '"' +
             ' data-file-name="' + K.esc(record.name) + '">' +
-            '<i class="ti ti-pencil" aria-hidden="true"></i>Rename</button>' +
-          '<button type="button" class="btn" data-import-planner-to-master' +
+            '<i class="ti ti-pencil" aria-hidden="true"></i>Rename</button>') : '') +
+          (canImport ? ('<button type="button" class="btn" data-import-planner-to-master' +
             ' data-blob-id="' + K.esc(record.blobId) + '"' +
             ' data-file-name="' + K.esc(record.name) + '"' +
             ' data-file-type="' + K.esc(record.type) + '"' +
             ' data-file-week="' + K.esc(record.week || '') + '"' +
             ' title="Baca isi file ini dan masukkan datanya ke Data Master">' +
-            '<i class="ti ti-database-import" aria-hidden="true"></i>Import ke Data Master</button>' +
-          '<button type="button" class="btn btn--danger" data-delete-planner-file' +
+            '<i class="ti ti-database-import" aria-hidden="true"></i>Import ke Data Master</button>') : '') +
+          (canDelete ? ('<button type="button" class="btn btn--danger" data-delete-planner-file' +
             ' data-blob-id="' + K.esc(record.blobId) + '"' +
             ' data-file-name="' + K.esc(record.displayName) + '"' +
             ' title="Hapus file ini dari Planner">' +
-            '<i class="ti ti-trash" aria-hidden="true"></i>Hapus</button>' +
+            '<i class="ti ti-trash" aria-hidden="true"></i>Hapus</button>') : '') +
           '</div></td>' +
       "</tr>";
     }).join("");
@@ -58,7 +62,7 @@
     return '<div class="page-head">' +
       '<div><h1 class="page-title">Planner mingguan</h1></div>' +
       '</div>' +
-    '<section class="panel workspace-form-panel">' +
+    (canUploadPlanner ? ('<section class="panel workspace-form-panel">' +
       '<div class="panel__head"><div><h2 class="section-title">Tambah file Planner</h2>' +
         '<p class="section-note">File asli disimpan di penyimpanan browser pada perangkat ini.</p></div></div>' +
       '<form class="workspace-form planner-form" data-workspace-form="planner">' +
@@ -70,7 +74,7 @@
           '<p class="field__note">Format: .xlsx, .xls, atau .csv. Maksimal 1 GB per berkas.</p></div>' +
         '<button type="submit" class="btn-primary"><i class="ti ti-upload"></i>Simpan file Planner</button>' +
       "</form>" +
-    "</section>" +
+    "</section>") : '') +
     '<section class="panel workspace-table-panel">' +
       '<div class="panel__head"><div><h2 class="section-title">File Planner yang diterima</h2>' +
         '<p class="section-note">' + records.length + " file tersimpan</p></div></div>" +

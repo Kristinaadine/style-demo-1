@@ -199,21 +199,34 @@
     const batchPanel = '<section class="panel master-import-folders"><div class="master-import-folders__head"><div><h2 class="section-title">Folder Week / WK</h2><p class="section-note">Klik folder minggu untuk menampilkan style Data Master pada minggu tersebut.</p></div>' + selectedWeekLabel + '</div>' +
       '<div class="master-import-folders__list">' + (plannerCards || '<div class="empty">Belum ada file Planner.</div>') + '</div></section>';
 
+    const canReset = K.can ? K.can("canReset") : true;
+    const canImport = K.can ? K.can("canImport") : true;
+    const canExport = K.can ? K.can("canExport") : true;
+    const canAdd = K.can ? K.can("canAdd") : true;
+
+    const actionButtons = ['<a class="btn" href="#/daftar-style">Buka folder style</a>'];
+    if (canImport) {
+      actionButtons.push('<button type="button" class="btn" data-master-import-excel title="Import data style dari file Excel atau CSV">' +
+        '<i class="ti ti-upload" aria-hidden="true"></i>Import Excel</button>' +
+        '<input hidden id="master-import-file" type="file" accept=".xlsx,.xls,.csv" data-master-import-file>');
+    }
+    if (canExport) {
+      actionButtons.push('<button type="button" class="btn" data-master-export-excel title="Export semua data ke file Excel">' +
+        '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i>Export Excel</button>');
+    }
+    if (canReset) {
+      actionButtons.push('<button type="button" class="btn btn--danger" data-master-reset-styles title="Hapus semua data style untuk import ulang">' +
+        '<i class="ti ti-trash" aria-hidden="true"></i>Reset Data</button>');
+    }
+
+    const addStylePanel = canAdd ? ('<details class="panel workspace-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah style ke Data Master</summary>') : '';
+
     return '<div class="page-head"><div>' +
       '<h1 class="page-title">Data Master</h1>' +
       '<p class="page-sub">Cari dan perbarui informasi style, jadwal, PIC, status template, foto fitting, dan keterangan.</p>' +
-      "</div><div class=\"page-actions\">" +
-        '<a class="btn" href="#/daftar-style">Buka folder style</a>' +
-        '<button type="button" class="btn" data-master-import-excel title="Import data style dari file Excel atau CSV">' +
-          '<i class="ti ti-upload" aria-hidden="true"></i>Import Excel</button>' +
-        '<input hidden id="master-import-file" type="file" accept=".xlsx,.xls,.csv" data-master-import-file>' +
-        '<button type="button" class="btn" data-master-export-excel title="Export semua data ke file Excel">' +
-          '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i>Export Excel</button>' +
-        '<button type="button" class="btn btn--danger" data-master-reset-styles title="Hapus semua data style untuk import ulang">' +
-          '<i class="ti ti-trash" aria-hidden="true"></i>Reset Data</button>' +
-      "</div></div>" +
+      "</div><div class=\"page-actions\">" + actionButtons.join('') + "</div></div>" +
       batchPanel +
-      '<details class="panel workspace-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah style ke Data Master</summary>' +
+      addStylePanel +
           '<form class="workspace-form workspace-form--grid" data-workspace-form="add-style">' +
           '<div class="field"><label for="new-product">Article / Product *</label><input id="new-product" name="product" required maxlength="80"></div>' +
           '<div class="field"><label for="new-brand">Brand</label><input id="new-brand" name="brand" maxlength="120" placeholder="Opsional"></div>' +

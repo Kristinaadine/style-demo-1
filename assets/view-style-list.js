@@ -13,6 +13,9 @@
   };
 
   function viewStyleList(params) {
+    const canAdd = K.can ? K.can("canAdd") : true;
+    const canUpload = K.can ? K.can("canUpload") : true;
+    const canDelete = K.can ? K.can("canDelete") : true;
     const plannerFiles = B.get().plannerFiles || [];
     K.ui.styleListImportId = "current";
     const activeBatch = null;
@@ -148,7 +151,7 @@
         '<td><input class="master-cell-input master-cell-input--narrow" type="number" min="0" step="0.01" data-style-id="' + K.esc(style.id) + '" data-master-field="smv" value="' + K.esc(style.smv || '') + '"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
         '<td><input class="master-cell-input" data-style-id="' + K.esc(style.id) + '" data-master-field="remark" value="' + K.esc(style.remark || '') + '" placeholder="Keterangan"' + (snapshotReadonly ? ' disabled' : '') + '></td>' +
         '<td><a class="btn" href="#/folder-style/' + encodeURIComponent(style.id) + '"><i class="ti ti-folder-open"></i>Buka <span class="hint">' + fileCount + '</span></a></td>' +
-        '<td><div class="master-row-actions"><button type="button" class="icon-btn icon-btn--danger" data-delete-style-row="' + K.esc(style.id) + '" title="Hapus"' + (snapshotReadonly ? ' disabled' : '') + '><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></td>' +
+        (canDelete ? ('<td><div class="master-row-actions"><button type="button" class="icon-btn icon-btn--danger" data-delete-style-row="' + K.esc(style.id) + '" title="Hapus"' + (snapshotReadonly ? ' disabled' : '') + '><i class="ti ti-trash"></i><span class="sr-only">Hapus</span></button></div></td>') : '') +
       '</tr>';
     }).join("");
 
@@ -203,14 +206,14 @@
             return '<option value="' + K.esc(b) + '"' + (K.ui.styleBuyer === b ? ' selected' : '') + '>' + K.esc(b) + '</option>';
           }).join('') +
         '</select>' +
-        '<button type="button" class="btn style-index-upload-button" data-style-index-upload>' +
+        (canUpload ? ('<button type="button" class="btn style-index-upload-button" data-style-index-upload>' +
           '<i class="ti ti-upload" aria-hidden="true"></i><span>Upload Index</span></button>' +
-        '<input hidden id="style-index-file" name="file" data-style-index-file type="file" accept=".xlsx,.xls,.csv" tabindex="-1">' +
-        importPanel.replace('<details class="panel style-index-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah / Upload Data Style</summary>', '<details class="style-index-add-panel"><summary class="btn-primary style-index-add-button"><i class="ti ti-plus" aria-hidden="true"></i><span>Tambah Style</span><i class="ti ti-chevron-down style-index-add-chevron" aria-hidden="true"></i></summary>') +
+          '<input hidden id="style-index-file" name="file" data-style-index-file type="file" accept=".xlsx,.xls,.csv" tabindex="-1">') : '') +
+        (canAdd ? importPanel.replace('<details class="panel style-index-add-panel"><summary><i class="ti ti-plus" aria-hidden="true"></i>Tambah / Upload Data Style</summary>', '<details class="style-index-add-panel"><summary class="btn-primary style-index-add-button"><i class="ti ti-plus" aria-hidden="true"></i><span>Tambah Style</span><i class="ti ti-chevron-down style-index-add-chevron" aria-hidden="true"></i></summary>') : '') +
       '</div>' +
       folderPanel +
       '<section class="panel style-index-panel"><div class="table-wrap workspace-table-scroll"><table class="table workspace-master-table"><thead><tr>' +
-      '<th>Preview Foto</th><th>Article / Style</th><th>Nama Style</th><th>Buyer</th><th>PIC</th><th>SMV</th><th>Remark</th><th>Folder</th><th>Aksi</th>' +
+      '<th>Preview Foto</th><th>Article / Style</th><th>Nama Style</th><th>Buyer</th><th>PIC</th><th>SMV</th><th>Remark</th><th>Folder</th>' + (canDelete ? '<th>Aksi</th>' : '') +
       '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="9" class="empty">Belum ada data style. Tambahkan atau upload index running style.</td></tr>') + '</tbody></table></div></section>';
   }
 

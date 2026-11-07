@@ -13,6 +13,7 @@
   const API_BASE = "http://localhost:3001/api";
 
   let pendingSave = 0;
+  let savingChain = Promise.resolve(); // antre agar dua POST /state tidak berlomba
 
   // ── UI status indicator ─────────────────────────────────────────────────────
 
@@ -99,21 +100,31 @@
   // ── Save state to server ────────────────────────────────────────────────────
 
   async function saveToDatabase() {
-    try {
-      const result = await request("/state", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(B.get()),
-      });
-      const migrated = await migrateIndexedDbBlobs();
-      window.dispatchEvent(new CustomEvent("bra-database-status", {
-        detail: { connected: true, db: result.database || "db", migrated: migrated },
-      }));
-    } catch (error) {
-      window.dispatchEvent(new CustomEvent("bra-database-status", {
-        detail: { connected: false, message: error.message },
-      }));
-    }
+    // Debounce 300ms + antrean: state terbaru yang diambil saat giliran tiba,
+    // dan request dituliskan berurutan sehingga tidak ada state lama yang
+    // menimpa state baru (race condition).
+    savingChain = savingChain.then(async function () {
+      try {
+        const result = await request("/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(B.get()),
+        });
+        const migrated = await migrateIndexedDbBlobs();
+        window.dispatchEvent(new CustomEvent("bra-database-status", {
+          detail: { connected: true, db: result.database || "db", migrated: migrated },
+        }));
+      } catch (error) {
+        window.dispatchEvent(new CustomEvent("bra-database-status", {
+          detail: { connected: false, message: error.message },
+        }));
+      }
+    });
+    return savingChain;
+  }
+
+  async function saveToDatabaseLegacy() {
+    return saveToDatabase();
   }
 
   // ── Hook into B.save ────────────────────────────────────────────────────────
@@ -123,7 +134,7 @@
     B.save = function () {
       _save.apply(B, arguments);
       window.clearTimeout(pendingSave);
-      pendingSave = window.setTimeout(saveToDatabase, 300);
+      pendingSave = window.setTimeout(saveToDatabaseLegacy, 300);
     };
   }
 

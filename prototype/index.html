@@ -42,25 +42,119 @@
   <!-- Main Container -->
   <main class="max-w-6xl w-full mx-auto p-8 space-y-6 flex-1">
 
-    <!-- Role Selector -->
-    <div class="bg-white rounded-[10px] border border-[#caced0] p-5 shadow-xs">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-[#043168] text-white flex items-center justify-center text-xl flex-shrink-0">
-          <i class="ti ti-user"></i>
+    <!-- Section: Aplikasi Live Berdasarkan Role (Shopee Model) -->
+    <div class="bg-white rounded-[10px] border border-[#caced0] p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#f0f0f0]">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-[#043168] text-white flex items-center justify-center text-xl flex-shrink-0">
+            <i class="ti ti-users-group"></i>
+          </div>
+          <div>
+            <h2 class="text-[16px] font-bold text-black">Aplikasi Live Asli (Tampilan Khusus Per Role Seperti Shopee)</h2>
+            <p class="text-[12px] text-[#878787] mt-0.5">
+              Portal live asli difungsikan untuk <strong>Administrator</strong> (akses & pantau penuh), serta memiliki tampilan khusus per peran login tanpa batasan error notifikasi.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 class="text-[14px] font-bold text-black">Pilih Aktor / Role Pengguna</h2>
-          <p class="text-[12px] text-[#878787] mt-0.5">
-            Pilih role yang akan diuji. Pilihan akan disimpan dan berlaku untuk semua halaman prototype.
-          </p>
-        </div>
+        <a href="../index.html?role=admin" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#043168] text-white shadow-xs hover:bg-[#0a3a78] transition self-start sm:self-auto">
+          <i class="ti ti-shield-check"></i>
+          <span>Buka Portal Administrator Utama</span>
+        </a>
       </div>
-      <div id="roleSelector" class="mt-4 max-w-xs"></div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mt-5">
+        <!-- Role 1: Admin -->
+        <a href="../index.html?role=admin" class="group block p-3.5 rounded-lg border-2 border-[#043168] bg-[#f8fafc] hover:bg-white hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">👑</span>
+              <span class="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#043168] text-white">Admin</span>
+            </div>
+            <h3 class="text-[13px] font-bold text-black mt-2 group-hover:text-[#043168]">1. Admin</h3>
+            <p class="text-[11px] text-[#64748b] mt-1 leading-relaxed">Akses penuh memantau & mengelola semua menu (Planner, Data Master, Daftar Style) & sistem.</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center text-[11px] font-semibold text-[#043168]">
+            <span>Masuk Admin</span>
+            <i class="ti ti-arrow-right text-xs ml-auto"></i>
+          </div>
+        </a>
+
+        <!-- Role 2: Planner -->
+        <a href="../index.html?role=planner" class="group block p-3.5 rounded-lg border border-[#caced0] bg-white hover:border-[#00754a] hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">📋</span>
+              <span class="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#00754a] text-white">Planner</span>
+            </div>
+            <h3 class="text-[13px] font-bold text-black mt-2 group-hover:text-[#00754a]">2. Planner</h3>
+            <p class="text-[11px] text-[#64748b] mt-1 leading-relaxed">Hanya halaman <strong>Planner Mingguan</strong>: terima berkas New Style Updated, pratinjau, unduh, & import.</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center text-[11px] font-semibold text-[#00754a]">
+            <span>Masuk Planner</span>
+            <i class="ti ti-arrow-right text-xs ml-auto"></i>
+          </div>
+        </a>
+
+        <!-- Role 3: IE -->
+        <a href="../index.html?role=ie" class="group block p-3.5 rounded-lg border border-[#caced0] bg-white hover:border-[#2563eb] hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">📐</span>
+              <span class="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#2563eb] text-white">IE</span>
+            </div>
+            <h3 class="text-[13px] font-bold text-black mt-2 group-hover:text-[#2563eb]">3. IE</h3>
+            <p class="text-[11px] text-[#64748b] mt-1 leading-relaxed">Halaman <strong>Data Master & Daftar Style</strong>: spesifikasi teknis, delivery OPD, import Excel, & upload dokumen.</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center text-[11px] font-semibold text-[#2563eb]">
+            <span>Masuk IE</span>
+            <i class="ti ti-arrow-right text-xs ml-auto"></i>
+          </div>
+        </a>
+
+        <!-- Role 4: Design -->
+        <a href="../index.html?role=design" class="group block p-3.5 rounded-lg border border-[#caced0] bg-white hover:border-[#7c3aed] hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">🎨</span>
+              <span class="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#7c3aed] text-white">Design</span>
+            </div>
+            <h3 class="text-[13px] font-bold text-black mt-2 group-hover:text-[#7c3aed]">4. Design</h3>
+            <p class="text-[11px] text-[#64748b] mt-1 leading-relaxed">Melihat Planner, Data Master, & Daftar Style serta mengunggah berkas foto desain/fitting style.</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center text-[11px] font-semibold text-[#7c3aed]">
+            <span>Masuk Design</span>
+            <i class="ti ti-arrow-right text-xs ml-auto"></i>
+          </div>
+        </a>
+
+        <!-- Role 5: Manajer -->
+        <a href="../index.html?role=manager" class="group block p-3.5 rounded-lg border border-[#caced0] bg-white hover:border-[#b45309] hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">👔</span>
+              <span class="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#b45309] text-white">Manajer</span>
+            </div>
+            <h3 class="text-[13px] font-bold text-black mt-2 group-hover:text-[#b45309]">5. Manajer</h3>
+            <p class="text-[11px] text-[#64748b] mt-1 leading-relaxed">Akses semua halaman (Planner, Data Master, Daftar Style) khusus mode pantau (lihat & unduh).</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center text-[11px] font-semibold text-[#b45309]">
+            <span>Masuk Manajer</span>
+            <i class="ti ti-arrow-right text-xs ml-auto"></i>
+          </div>
+        </a>
+      </div>
     </div>
 
-    <script>
-      window.RoleAuth.renderRoleSelector("roleSelector");
-    </script>
+    <!-- Section Heading for Prototypes -->
+    <div class="pt-4">
+      <div class="flex items-center gap-2 text-[14px] font-bold text-black mb-1">
+        <i class="ti ti-layout-grid text-[#00754a]"></i>
+        <span>Halaman Prototipe UI Mandiri (Untuk Pengujian Visual & Alur Desain)</span>
+      </div>
+      <p class="text-[12px] text-[#878787]">
+        Halaman di bawah ini dibuat terpisah per modul utama untuk testing antarmuka visual mandiri.
+      </p>
+    </div>
     
     <div class="bg-white rounded-[10px] border border-[#caced0] p-5 shadow-xs">
       <div class="flex items-center gap-3">
